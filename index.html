@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>수업 시간에 자는 얘들 깨우기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body { 
+      background-color: #1e272e; 
+      color: #d2dae2; 
+      font-family: 'Noto Sans KR', sans-serif; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      min-height: 100vh; 
+      margin: 0; 
+    }
+    
+    h2, h3, button, #golden-banner, .desk, #teacher-speech, .result-text {
+      font-family: 'Jua', sans-serif; 
+    }
+
+    #game-container { 
+      width: 100%; 
+      max-width: 850px; 
+      background: #2f3542; 
+      padding: 40px; 
+      border-radius: 15px; 
+      box-shadow: 0 15px 40px rgba(0,0,0,0.6); 
+      text-align: center; 
+      position: relative; 
+      min-height: 600px; /* 컨테이너 최소 높이 고정 */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    /* 로그인 화면 (학번/이름 입력 화면 풀사이즈) */
+    #login-screen { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center;
+      height: 100%;
+    }
+    #login-screen h2 { color: #f5f6fa; font-size: 42px; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+    #login-screen p { color: #a4b0be; margin-bottom: 40px; font-size: 18px; }
+    
+    .input-group { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 20px; 
+      margin-bottom: 40px; 
+      width: 100%;
+      align-items: center;
+    }
+    
+    input { 
+      padding: 18px; font-size: 20px; border-radius: 10px; 
+      border: 3px solid #57606f; background: #1e272e; color: #f5f6fa; 
+      width: 280px; 
+      text-align: center; outline: none; transition: all 0.3s; 
+      font-family: 'Noto Sans KR', sans-serif;
+      margin: 0; 
+    }
+    input:focus { border-color: #eccc68; box-shadow: 0 0 15px rgba(236, 204, 104, 0.4); transform: scale(1.05); }
+    
+    button { 
+      padding: 16px 50px; font-size: 24px; background: #3742fa; color: white; 
+      border: none; border-radius: 10px; cursor: pointer; 
+      box-shadow: 0 8px 0 #272fbd, 0 10px 15px rgba(0,0,0,0.3); 
+      transition: all 0.1s ease;
+    }
+    button:active { transform: translateY(6px); box-shadow: 0 2px 0 #272fbd, 0 4px 6px rgba(0,0,0,0.3); }
+
+    /* 게임 화면 */
+    #game-screen { display: none; width: 100%; }
+    
+    /* 3D 칠판 영역 */
+    #chalkboard-area { 
+      position: relative; background: #1e5646; 
+      border: 12px solid #5c3a21; 
+      border-radius: 8px; margin-bottom: 30px; min-height: 180px; 
+      display: flex; flex-direction: column; justify-content: center; align-items: center; 
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.7), 0 10px 20px rgba(0,0,0,0.4); 
+    }
+    
+    #teacher-sprite { font-size: 65px; z-index: 5; margin-bottom: 15px; animation: moveTeacher 4s infinite ease-in-out; text-shadow: 2px 5px 10px rgba(0,0,0,0.4); }
+    #teacher-speech { 
+      position: absolute; top: 25px; right: 40px; background: #ffffff; color: #2d3436; 
+      padding: 10px 20px; border-radius: 20px; font-size: 18px; display: none; z-index: 10; 
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+    }
+    #teacher-speech::after { content: ''; position: absolute; left: -8px; top: 15px; border-top: 8px solid transparent; border-right: 12px solid #ffffff; border-bottom: 8px solid transparent; }
+
+    .status-info { 
+      width: 100%; display: flex; justify-content: space-around; font-size: 18px; font-weight: bold; 
+      background: rgba(0,0,0,0.3); padding: 12px 15px; border-radius: 0 0 4px 4px; 
+      margin-top: auto; z-index: 2; color: #f5f6fa; 
+    }
+    
+    #golden-banner { display: none; font-size: 26px; color: #eccc68; text-shadow: 2px 2px 0 #ff4757; background: #ff4757; padding: 15px; border-radius: 10px; margin-bottom: 20px; animation: blink 1s infinite; z-index: 20; box-shadow: 0 6px 20px rgba(255, 71, 87, 0.5); }
+    
+    @keyframes blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.85; transform: scale(1.02); } }
+    @keyframes moveTeacher { 0%, 100% { transform: translateX(0) rotate(0deg); } 25% { transform: translateX(-12px) rotate(-1.5deg); } 75% { transform: translateX(12px) rotate(1.5deg); } }
+
+    /* 교실 바닥 & 3D 격자 */
+    #classroom-wrapper { 
+      position: relative; width: 100%; padding: 25px; 
+      background: rgba(0,0,0,0.15); border-radius: 12px;
+      box-shadow: inset 0 10px 30px rgba(0,0,0,0.4);
+      perspective: 900px; 
+    }
+    #classroom-grid { 
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; 
+      transform: rotateX(12deg); 
+      transform-style: preserve-3d;
+    }
+    
+    .desk-wrapper { position: relative; height: 80px; }
+    
+    .desk { 
+      height: 100%; background: linear-gradient(145deg, #d1a87c, #b3855c); border-radius: 8px; 
+      display: flex; flex-direction: column; align-items: center; justify-content: center; 
+      font-size: 18px; color: #4a2e15; text-shadow: 1px 1px 0px rgba(255,255,255,0.4);
+      cursor: pointer; user-select: none; transition: all 0.05s ease; z-index: 1; 
+      box-shadow: 0 8px 0 #8b5a2b, 0 12px 20px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.3);
+      position: relative; top: 0;
+      /* 모바일 터치 시 하이라이트 방지 */
+      -webkit-tap-highlight-color: transparent; 
+    }
+    .desk:active { top: 6px; box-shadow: 0 2px 0 #8b5a2b, 0 5px 8px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.3); }
+    
+    .desk.sleeping { 
+      background: linear-gradient(145deg, #ff6b81, #ff4757); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 0 #c0392b, 0 12px 20px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.4); animation: shake 0.4s infinite; 
+    }
+    .desk.sleeping:active { top: 6px; box-shadow: 0 2px 0 #c0392b, 0 5px 8px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.4); }
+    
+    .complaint-bubble { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: #eccc68; color: #2f3542; padding: 6px 12px; font-size: 13px; font-weight: bold; border-radius: 8px; white-space: nowrap; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 15; pointer-events: none; animation: fadeUp 0.8s forwards; font-family: 'Noto Sans KR', sans-serif; }
+    @keyframes fadeUp { 0% { opacity: 0; transform: translate(-50%, 0); } 20% { opacity: 1; transform: translate(-50%, -10px); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -20px); } }
+
+    .orb { position: absolute; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; z-index: 10; animation: float 2s infinite ease-in-out; border: 2px solid rgba(255,255,255,0.8); -webkit-tap-highlight-color: transparent; }
+    .orb.blue { background: radial-gradient(circle at 30% 30%, #74b9ff, #0984e3); box-shadow: 0 10px 15px rgba(9,132,227,0.4); top: -20px; left: 50%; transform: translateX(-50%); }
+    .orb.green { background: radial-gradient(circle at 30% 30%, #55efc4, #00b894); box-shadow: 0 10px 15px rgba(0,184,148,0.4); bottom: -15px; left: 50%; transform: translateX(-50%); }
+    .orb.gold { background: radial-gradient(circle at 30% 30%, #ffeaa7, #fdcb6e); box-shadow: 0 10px 15px rgba(253,203,110,0.4); top: 30px; left: -15px; }
+    @keyframes shake { 0%, 100% { transform: rotate(0deg); } 20%, 60% { transform: rotate(-3deg); } 40%, 80% { transform: rotate(3deg); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+    /* 결과 화면 UI */
+    #result-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      width: 100%;
+    }
+    #result-title { font-size: 42px; color: #f5f6fa; margin-bottom: 10px; text-shadow: 2px 2px 5px rgba(0,0,0,0.4); }
+    #result-reason { font-size: 18px; color: #a4b0be; margin-bottom: 30px; }
+    #result-score { font-size: 28px; color: #d2dae2; background: rgba(0,0,0,0.2); padding: 15px 30px; border-radius: 12px; margin-bottom: 20px; }
+    #result-rank { font-size: 80px; font-weight: bold; margin: 15px 0; text-shadow: 3px 5px 15px rgba(0,0,0,0.5); }
+    #result-desc { font-size: 22px; color: #f5f6fa; margin-bottom: 50px; }
+    
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    
+    <div id="login-screen">
+      <h2>🏫 수업 시간에 자는 얘들 깨우기</h2>
+      <p>학번과 이름을 입력하고 게임을 시작하세요!</p>
+      <div class="input-group">
+        <input type="text" id="student-id" placeholder="학번 (예: 30101)" maxlength="10">
+        <input type="text" id="student-name" placeholder="이름" maxlength="10">
+      </div>
+      <button onclick="startGame()">게임 시작</button>
+    </div>
+
+    <div id="game-screen">
+      <div id="golden-banner">⚡ 이제 곧 집간다! ⚡</div>
+      
+      <div id="chalkboard-area">
+        <div id="teacher-speech">말 좀 듣자 얘들아..</div>
+        <div id="teacher-sprite">👨‍🏫</div>
+        
+        <div class="status-info">
+          <div>⏱️ <span id="timer">60</span>s</div>
+          <div id="anger-bar">💢 분노: 0 / 6</div>
+          <div>🏆 <span id="score">0</span>pt</div>
+        </div>
+      </div>
+      
+      <div id="active-buff" style="font-size: 16px; color: #ff6b81; margin-bottom: 15px; height: 22px; font-weight: bold;"></div>
+
+      <div id="classroom-wrapper">
+        <div id="classroom-grid"></div>
+      </div>
+    </div>
+
+    <div id="result-screen">
+      <h2 id="result-title" class="result-text">결과</h2>
+      <div id="result-reason">사유</div>
+      <div id="result-score" class="result-text">최종 점수: 0점</div>
+      
+      <div id="result-rank" class="result-text">A</div>
+      <div id="result-desc" class="result-text">칭호</div>
+      
+      <button onclick="returnToMain()">처음으로 돌아가기</button>
+    </div>
+
+  </div>
+
+  <script>
+    const grid = document.getElementById('classroom-grid');
+    const teacherSprite = document.getElementById('teacher-sprite');
+    const teacherSpeech = document.getElementById('teacher-speech');
+    const angerBar = document.getElementById('anger-bar');
+    
+    let score = 0, anger = 0, timeLeft = 60;
+    let gameInterval, timerInterval, orbInterval;
+    const desks = [];
+    
+    let currentState = "NORMAL"; 
+    let stateTimeout = null;
+    let currentUserId = "";
+    let currentUserName = "";
+    let isSpurtMode = false;
+
+    function startGame() {
+      currentUserId = document.getElementById('student-id').value.trim();
+      currentUserName = document.getElementById('student-name').value.trim();
+      if(!currentUserId || !currentUserName) { alert("학번과 이름을 입력해주세요!"); return; }
+      
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('result-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'block';
+      initGame();
+    }
+
+    function initGame() {
+      grid.innerHTML = ""; desks.length = 0; score = 0; anger = 0; timeLeft = 60; currentState = "NORMAL"; isSpurtMode = false;
+      updateUI();
+
+      for (let i = 0; i < 25; i++) {
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('desk-wrapper');
+        const desk = document.createElement('div');
+        desk.classList.add('desk');
+        desk.innerText = "열공";
+        desk.dataset.status = "awake";
+        
+        // mousedown 대신 pointerdown 사용 (모바일/PC 모두 딜레이 없이 가장 빠르게 인식)
+        // 불필요한 e.target !== desk 조건문 제거
+        desk.addEventListener('pointerdown', (e) => {
+          if (desk.dataset.status === "sleeping") {
+            desk.dataset.status = "awake"; 
+            desk.classList.remove('sleeping'); 
+            desk.innerText = "열공";
+            score++; 
+            updateUI();
+          } else {
+            if(currentState !== "GREEN") { 
+              anger++; 
+              showTeacherSpeech("거기 누구야! 집중 안 해?"); 
+              showStudentComplaint(wrapper); 
+              updateUI(); 
+              checkGameOver(); 
+            }
+          }
+        });
+        
+        wrapper.appendChild(desk); grid.appendChild(wrapper); desks.push(desk);
+      }
+      
+      gameInterval = setInterval(processSleepingLogic, 1000);
+      timerInterval = setInterval(processTimerLogic, 1000);
+      orbInterval = setInterval(spawnOrbRandomly, 3000); 
+    }
+
+    function showStudentComplaint(targetWrapper) {
+      const complaints = ["나 안 자는데?", "저 공부 중인데요;", "쉿! 집중 중!", "으악 깜짝이야!"];
+      const randomText = complaints[Math.floor(Math.random() * complaints.length)];
+      const bubble = document.createElement('div');
+      bubble.classList.add('complaint-bubble'); bubble.innerText = randomText;
+      targetWrapper.appendChild(bubble);
+      setTimeout(() => { if(bubble) bubble.remove(); }, 800);
+    }
+
+    function updateUI() {
+      const sleepingCount = desks.filter(d => d.dataset.status === "sleeping").length;
+      document.getElementById('score').innerText = score;
+      document.getElementById('timer').innerText = timeLeft;
+      
+      let modeText = isSpurtMode ? " 🔥마지막 스퍼트🔥" : "";
+      angerBar.innerText = `💢 분노: ${anger} / 6 (${sleepingCount}명 취침)${modeText}`;
+      
+      const buffText = document.getElementById('active-buff');
+      const goldBanner = document.getElementById('golden-banner');
+      goldBanner.style.display = (currentState === "GOLD") ? "block" : "none";
+
+      updateTeacherVisual(sleepingCount);
+
+      if(currentState === "BLUE") buffText.innerText = "🔵 파랑 구슬: 학생들이 졸음을 참는 중..";
+      else if(currentState === "GREEN") buffText.innerText = "🟢 초록 구슬: 고3 선생님은 모든 걸 이해하십니다..";
+      else if(currentState === "GOLD") buffText.innerText = "🟡 황금 구슬: 이제 곧 집간다!! (분노 초기화!)";
+      else if(currentState === "RED") buffText.innerText = "🔴 빨간 구슬: 식곤증이 몰려오는 5교시!! (강제 디버프!)";
+      else if(currentState === "BLACK") buffText.innerText = "⚫ 검정 구슬: 선생님이 교무실에 가셨습니다! (강제 디버프!)";
+      else buffText.innerText = isSpurtMode ? "⚠️ 경고: 수업 종료 직전! 졸음 속도 2배 증가!" : "";
+    }
+
+    function updateTeacherVisual(sleepingCount) {
+      teacherSprite.style.display = "block"; teacherSprite.style.filter = "none";
+      if(currentState === "BLACK") { teacherSprite.style.display = "none"; return; }
+      if(currentState === "GREEN") { teacherSprite.innerText = "👴"; showTeacherSpeech("허허.. 피곤할 때도 있는 법이지.."); return; }
+      if(currentState === "GOLD") { teacherSprite.innerText = "🥳"; teacherSprite.style.transform = "scale(1.2)"; return; }
+
+      if(anger === 0) teacherSprite.innerText = isSpurtMode ? "⚡" : "👨‍🏫";
+      else if(anger <= 2) teacherSprite.innerText = "😠";
+      else if(anger <= 4) { teacherSprite.innerText = "😡"; teacherSprite.style.transform = "scale(1.2)"; }
+      else if(anger <= 5) { teacherSprite.innerText = "🌋"; teacherSprite.style.transform = "scale(1.4)"; showTeacherSpeech("너희들 정말 이럴 거야?!"); }
+
+      if(sleepingCount >= 4 && currentState === "NORMAL") { teacherSprite.innerText = "😨"; showTeacherSpeech("교실 꼴이 이게 뭐야!"); }
+    }
+
+    function showTeacherSpeech(text) {
+        teacherSpeech.innerText = text; teacherSpeech.style.display = "block";
+        setTimeout(() => { teacherSpeech.style.display = "none"; }, 2000);
+    }
+
+    function changeState(newState, duration) {
+      if(stateTimeout) clearTimeout(stateTimeout);
+      currentState = newState;
+      
+      if(newState === "GOLD") {
+        anger = 0; 
+        showTeacherSpeech("종 치기 직전이니 봐준다! 칼퇴 준비!"); 
+        desks.forEach(desk => { desk.dataset.status = "awake"; desk.classList.remove('sleeping'); desk.innerText = "열공"; });
+      }
+      
+      updateUI();
+      stateTimeout = setTimeout(() => { currentState = "NORMAL"; updateUI(); }, duration * 1000);
+    }
+
+    function processSleepingLogic() {
+      const sleepingCount = desks.filter(d => d.dataset.status === "sleeping").length;
+      if(currentState === "BLACK" && sleepingCount > 0) {
+        if(Math.random() < (sleepingCount * 0.08)) { currentState = "NORMAL"; updateUI(); return; }
+      }
+      if (sleepingCount > 5 && currentState !== "GREEN") { endGame(false, "동시에 자는 학생이 5명을 넘었습니다!"); return; }
+
+      let spawnLimit = isSpurtMode ? (Math.floor(Math.random() * 2) + 2) : (Math.floor(Math.random() * 2) + 1); 
+      
+      if (currentState === "GOLD") return; 
+      if (currentState === "BLUE") { if(sleepingCount >= 1) return; spawnLimit = 1; if(Math.random() > 0.4) return; }
+      if (currentState === "RED") spawnLimit = isSpurtMode ? 4 : (Math.floor(Math.random() * 3) + 2); 
+      if (currentState === "BLACK") spawnLimit = Math.floor(Math.random() * 2) + 2; 
+
+      let spawned = 0;
+      const shuffled = [...desks].sort(() => 0.5 - Math.random());
+      for(let desk of shuffled) {
+        if(spawned >= spawnLimit) break;
+        if(desk.dataset.status === "awake") {
+          desk.dataset.status = "sleeping"; desk.classList.add('sleeping'); desk.innerText = "Zzz..";
+          spawned++;
+        }
+      }
+      updateUI();
+    }
+
+    function processTimerLogic() {
+      timeLeft--; 
+      
+      if (timeLeft === 10 && !isSpurtMode) {
+        isSpurtMode = true;
+        showTeacherSpeech("야, 야! 종 치기 직전이다! 집중해!");
+        clearInterval(gameInterval);
+        gameInterval = setInterval(processSleepingLogic, 500); 
+      }
+      
+      updateUI();
+      if (timeLeft <= 0) endGame(true);
+    }
+
+    function spawnOrbRandomly() {
+      if(document.querySelectorAll('.orb').length >= 3) return; 
+      const randomIdx = Math.floor(Math.random() * 25);
+      const targetWrapper = grid.children[randomIdx];
+      
+      if(targetWrapper.querySelector('.orb')) return;
+      
+      const types = [ 
+        {name:'blue', time:7}, 
+        {name:'green', time:7}, 
+        {name:'gold', time:5}, 
+        {name:'red', time:7}, 
+        {name:'black', time:7} 
+      ];
+      const selectedType = types[Math.floor(Math.random() * types.length)];
+      
+      if (selectedType.name === 'red' || selectedType.name === 'black') {
+        changeState(selectedType.name.toUpperCase(), selectedType.time);
+        return; 
+      }
+      
+      const orb = document.createElement('div');
+      orb.classList.add('orb', selectedType.name);
+      
+      // 구슬도 pointerdown으로 변경
+      orb.addEventListener('pointerdown', (e) => {
+        e.stopPropagation(); 
+        changeState(selectedType.name.toUpperCase(), selectedType.time); 
+        orb.remove();
+      });
+      targetWrapper.appendChild(orb);
+      setTimeout(() => { if(orb) orb.remove(); }, 4000);
+    }
+
+    function checkGameOver() { if (anger >= 6 && currentState !== "GREEN") endGame(false, "선생님이 폭발하셨습니다!"); }
+
+    function endGame(isClear, reason = "") {
+      clearInterval(gameInterval); clearInterval(timerInterval); clearInterval(orbInterval);
+      if(stateTimeout) clearTimeout(stateTimeout);
+      
+      document.getElementById('game-screen').style.display = 'none';
+      document.getElementById('result-screen').style.display = 'flex';
+
+      let rank = "";
+      let rankColor = "";
+      let rankDesc = "";
+      
+      if (score >= 60) {
+        rank = "S"; rankColor = "#eccc68"; rankDesc = "전설의 교생 선생님!!";
+      } else if (score >= 40) {
+        rank = "A"; rankColor = "#2ed573"; rankDesc = "열혈 교사 등극!";
+      } else if (score >= 20) {
+        rank = "B"; rankColor = "#1e90ff"; rankDesc = "그럭저럭 평범한 선생님";
+      } else {
+        rank = "C"; rankColor = "#ff4757"; rankDesc = "학생들에게 먹혀버린 교실..";
+      }
+
+      document.getElementById('result-title').innerText = isClear ? "🎉 무사히 수업 종료!" : "💀 수업 파탄..";
+      document.getElementById('result-reason').innerText = isClear ? "모든 정규 시간을 완벽하게 버텨냈습니다!" : `실패 사유: ${reason}`;
+      document.getElementById('result-score').innerText = `최종 점수: ${score}명 깨움`;
+      
+      const rankEl = document.getElementById('result-rank');
+      rankEl.innerText = `${rank} 랭크`;
+      rankEl.style.color = rankColor;
+      
+      document.getElementById('result-desc').innerText = rankDesc;
+    }
+
+    function returnToMain() {
+      // 명예의 전당 관련 로직 삭제 및 초기 화면으로 복귀
+      document.getElementById('student-id').value = "";
+      document.getElementById('student-name').value = "";
+      
+      document.getElementById('result-screen').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>
