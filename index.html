@@ -118,6 +118,10 @@ h2 { font-size: var(--step-2); margin: 0; font-weight: 700; text-wrap: balance; 
   background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
 }
 .sort { flex: 0 0 auto; }
+.lv-range { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; height: 42px; padding: 0 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; color: var(--muted); }
+.lv-range-label { font-family: var(--font-mono); font-size: var(--step--1); font-weight: 700; }
+.lv-range input { width: 72px; height: 30px; padding: 0 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: center; -moz-appearance: textfield; }
+.lv-range input::-webkit-outer-spin-button, .lv-range input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .btn {
   height: 42px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--line);
   background: var(--surface); font-weight: 600; cursor: pointer;
@@ -144,6 +148,25 @@ h2 { font-size: var(--step-2); margin: 0; font-weight: 700; text-wrap: balance; 
 .chip .dot { width: 9px; height: 9px; border-radius: 50%; }
 .chip:disabled { opacity: .4; cursor: default; }
 
+.lv-answer { margin-top: 12px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent-line); border-radius: var(--radius); display: grid; gap: 10px; }
+.lv-answer p { margin: 0; }
+.lv-answer-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lv-seg { display: inline-flex; gap: 2px; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; }
+.lv-seg-btn { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-weight: 600; font-size: var(--step--1); cursor: pointer; }
+.lv-seg-btn small { font-family: var(--font-mono); font-size: 11px; opacity: .8; }
+.lv-seg-btn[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: var(--shadow); }
+.lv-seg-btn:disabled { opacity: .4; cursor: default; }
+.lv-answer-head { font-size: var(--step-1); }
+.lv-answer-head b { font-family: var(--font-mono); }
+.lv-answer-near { color: var(--muted); font-size: var(--step--1); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.lv-jump { font-family: var(--font-mono); font-weight: 700; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; }
+.lv-answer-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 8px 20px; }
+.lv-answer-list li { min-width: 0; font-size: var(--step--1); }
+.lv-mon { font-weight: 700; color: var(--fg); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.lv-reg { color: var(--muted); font-size: 12px; }
+.lv-cores { display: grid; gap: 1px; margin-top: 3px; color: var(--muted); font-size: 12.5px; }
+.lv-cores span { display: flex; gap: 6px; align-items: baseline; overflow-wrap: anywhere; }
+.lv-cores i { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
 .summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 16px 0 10px; flex-wrap: wrap; }
 .count { color: var(--muted); font-size: var(--step--1); font-variant-numeric: tabular-nums; }
 
@@ -345,6 +368,11 @@ table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1);
         <span class="sr">검색</span>
         <input id="q" type="search" placeholder="몬스터, 스킬, 효과 또는 레벨로 검색" autocomplete="off">
       </label>
+      <label class="lv-range">
+        <span class="lv-range-label">Lv.</span>
+        <span class="sr">정확한 레벨</span>
+        <input id="lv-exact" type="number" inputmode="numeric" min="1" max="170" placeholder="레벨">
+      </label>
       <label class="sort">
         <span class="sr">정렬</span>
         <select id="sort">
@@ -355,6 +383,8 @@ table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1);
       </label>
       <button id="toggle-filters" class="btn ghost filter-toggle" type="button" aria-expanded="false" aria-controls="filters">필터</button>
     </div>
+
+    <div id="lv-answer" class="lv-answer" aria-live="polite" hidden></div>
 
     <div id="filters" class="filters">
       <div class="fgroup"><h3>지역</h3><div class="chips" data-group="region"></div></div>
@@ -603,6 +633,7 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
   $("reset").addEventListener("click", function () {
     Object.keys(selected).forEach(function (g) { selected[g].clear(); });
     $("q").value = "";
+    $("lv-exact").value = "";
     page = 1;
     renderChips();
     renderCatalog();
@@ -612,18 +643,113 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
     this.setAttribute("aria-expanded", open);
   });
 
+  var qTimer;
+  // exact level -> answer box listing every core of that level
+  var coreLevelsAll = Array.from(new Set(allCores.map(function (c) { return c.level; }))).sort(function (a, b) { return a - b; });
+  function renderLevelAnswer(lv) {
+    var box = $("lv-answer");
+    if (lv === null) { box.hidden = true; box.innerHTML = ""; return; }
+    var allAt = allCores.filter(function (c) { return c.level === lv; });
+    var bossSel = selected.boss;
+    var mode = bossSel.size === 1 ? (bossSel.has("boss") ? "boss" : "normal") : "all";
+    var cores = allAt.filter(function (c) { return mode === "all" || (mode === "boss" ? c.monster.boss : !c.monster.boss); });
+    var monCount = function (fn) { return new Set(allAt.filter(fn).map(function (c) { return c.monster; })).size; };
+    var seg = '<div class="lv-seg" role="group" aria-label="보스·일반 필터">' + [
+      ["all", "전체", monCount(function () { return true; })],
+      ["normal", "일반", monCount(function (c) { return !c.monster.boss; })],
+      ["boss", "보스", monCount(function (c) { return c.monster.boss; })]
+    ].map(function (o) {
+      return '<button type="button" class="lv-seg-btn" data-bossmode="' + o[0] + '" aria-pressed="' + (mode === o[0]) + '"' +
+        (o[2] ? "" : " disabled") + ">" + o[1] + "<small>" + o[2] + "</small></button>";
+    }).join("") + "</div>";
+    if (allAt.length && !cores.length) {
+      box.innerHTML = '<div class="lv-answer-top"><p class="lv-answer-head"><b>Lv.' + lv + "</b> " + (mode === "boss" ? "보스" : "일반") +
+        " 코어는 없습니다.</p>" + seg + "</div>";
+      box.hidden = false;
+      return;
+    }
+    if (!cores.length) {
+      var lower = coreLevelsAll.filter(function (l) { return l < lv; }).pop();
+      var higher = coreLevelsAll.find(function (l) { return l > lv; });
+      box.innerHTML = '<p class="lv-answer-head"><b>Lv.' + lv + "</b> 코어는 없습니다.</p>" +
+        ((lower || higher) ? '<p class="lv-answer-near">가까운 레벨: ' + [lower, higher].filter(Boolean).map(function (l) {
+          return '<button type="button" class="lv-jump" data-lv="' + l + '">Lv.' + l + "</button>";
+        }).join(" ") + "</p>" : "");
+      box.hidden = false;
+      return;
+    }
+    var byMon = new Map();
+    cores.forEach(function (c) { if (!byMon.has(c.monster)) byMon.set(c.monster, []); byMon.get(c.monster).push(c); });
+    var bosses = Array.from(byMon.keys()).filter(function (m) { return m.boss; }).length;
+    box.innerHTML = '<div class="lv-answer-top"><p class="lv-answer-head"><b>Lv.' + lv + "</b> " +
+      (mode === "boss" ? "보스 " : mode === "normal" ? "일반 " : "") + "코어 " + cores.length + "개 · 몬스터 " + byMon.size + "종" +
+      (mode === "all" && bosses ? " (보스 " + bosses + ")" : "") + "</p>" + seg + "</div>" +
+      '<ul class="lv-answer-list">' + Array.from(byMon.entries()).map(function (e) {
+        var m = e[0];
+        return '<li><a href="#catalog" class="lv-mon" data-mid="' + m.id + '">' + esc(m.monster) + "</a>" +
+          (m.boss ? ' <span class="bossmark">보스</span>' : "") + ' <span class="lv-reg">' + esc(m.region) + "</span>" +
+          '<span class="lv-cores">' + e[1].map(function (c) {
+            return '<span class="' + COLOR_CLASS[c.color] + '"><i></i>' + esc(c.type === "active" ? c.skill : c.effect) + "</span>";
+          }).join("") + "</span></li>";
+      }).join("") + "</ul>";
+    box.hidden = false;
+  }
+  $("lv-answer").addEventListener("click", function (e) {
+    var sb = e.target.closest(".lv-seg-btn");
+    if (sb) {
+      selected.boss.clear();
+      if (sb.dataset.bossmode !== "all") selected.boss.add(sb.dataset.bossmode);
+      renderChips();
+      renderCatalog();
+      return;
+    }
+    var j = e.target.closest(".lv-jump");
+    if (j) { $("lv-exact").value = j.dataset.lv; $("q").value = ""; renderCatalog(); return; }
+    var a = e.target.closest(".lv-mon");
+    if (a) {
+      e.preventDefault();
+      var card = $("m-" + a.dataset.mid);
+      if (card) {
+        var off = document.querySelector(".masthead").getBoundingClientRect().bottom + $("floor-nav").offsetHeight + 8;
+        window.scrollTo({ top: card.getBoundingClientRect().top + window.scrollY - off, behavior: "smooth" });
+      }
+    }
+  });
+  // ---------- level search ----------
+  // search box: "100", "Lv.100", "레벨 100" -> exact; "100~120", "100-120" -> range; "100+" / "100이상" -> 100 and above
+  function levelRange(raw) {
+    var lo = null, hi = null;
+    var t = raw.replace(/\s+/g, "").replace(/^(lv\.?|레벨)/i, "");
+    var m;
+    if ((m = t.match(/^(\d+)$/))) { lo = hi = Number(m[1]); }
+    else if ((m = t.match(/^(\d+)[~\-](\d+)$/))) { lo = Number(m[1]); hi = Number(m[2]); }
+    else if ((m = t.match(/^(\d+)(\+|이상)$/))) { lo = Number(m[1]); }
+    else if ((m = t.match(/^(\d+)이하$/))) { hi = Number(m[1]); }
+    else if (raw) { /* text search */ }
+    var ex = $("lv-exact").value.trim();
+    if (ex !== "" && /^\d+$/.test(ex)) { lo = hi = Number(ex); }
+    if (lo === null && hi === null) return null;
+    if (lo === null) lo = 0;
+    if (hi === null) hi = 999;
+    if (lo > hi) { var x = lo; lo = hi; hi = x; }
+    return { lo: lo, hi: hi };
+  }
+  ["lv-exact"].forEach(function (id) {
+    $(id).addEventListener("input", function () {
+      clearTimeout(qTimer);
+      qTimer = setTimeout(function () { page = 1; renderCatalog(); }, 150);
+    });
+  });
+
   // ---------- catalog ----------
   var PAGE_SIZE = 48, page = 1;
 
-  function coreFilterActive(q) {
-    return !!q || ["color", "kind", "weapon", "stat", "life"].some(function (g) { return selected[g].size; });
+  function coreFilterActive(q, lr) {
+    return !!q || !!lr || ["color", "kind", "weapon", "stat", "life"].some(function (g) { return selected[g].size; });
   }
-  function coreMatches(c, q, qNum) {
-    if (q) {
-      var hit = c.searchText.indexOf(q) >= 0;
-      if (!hit && qNum !== null) hit = c.level === qNum || c.monster.level === qNum;
-      if (!hit) return false;
-    }
+  function coreMatches(c, q, lr) {
+    if (q && c.searchText.indexOf(q) < 0) return false;
+    if (lr && (c.level < lr.lo || c.level > lr.hi)) return false;
     for (var g in GROUPS) {
       if (GROUPS[g].level !== "core" || !selected[g].size) continue;
       var ok = false;
@@ -679,14 +805,16 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
 
   function renderCatalog() {
     var raw = $("q").value.trim();
+    var lr = levelRange(raw);
+    if (lr) raw = "";
     var q = norm(raw);
-    var qNum = /^\d+$/.test(raw) ? Number(raw) : null;
-    var coreF = coreFilterActive(q);
+    var coreF = coreFilterActive(q, lr);
+    renderLevelAnswer(lr && lr.lo === lr.hi ? lr.lo : null);
 
     var list = [];
     monsters.forEach(function (m) {
       if (!monsterMatches(m)) return;
-      var hits = m.cores.filter(function (c) { return coreMatches(c, q, qNum); });
+      var hits = m.cores.filter(function (c) { return coreMatches(c, q, lr); });
       if (!hits.length && q && norm(m.monster).indexOf(q) >= 0 &&
           !["color", "kind", "weapon", "stat", "life"].some(function (g) { return selected[g].size; })) {
         hits = m.cores.slice();
@@ -705,7 +833,7 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
     $("count").textContent = "몬스터 " + list.length + "종 · 코어 " + nCores + "개" +
       (coreF ? " 일치" : "") + " / 전체 " + allCores.length + "개";
 
-    var nameRaw = raw && qNum === null ? raw : "";
+    var nameRaw = raw;
     var cardHTML = function (x) {
       var m = x.m;
       var cores = m.cores.map(function (c) { return coreHTML(c, coreF && x.hits.indexOf(c) < 0, nameRaw); }).join("");
@@ -744,7 +872,6 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
     $("empty").hidden = list.length > 0;
   }
 
-  var qTimer;
   $("q").addEventListener("input", function () {
     clearTimeout(qTimer);
     qTimer = setTimeout(function () { page = 1; renderCatalog(); }, 120);
