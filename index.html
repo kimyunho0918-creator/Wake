@@ -267,6 +267,14 @@ table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1);
 }
 
 /* ---- want panel ---- */
+.card-want { display: grid; gap: 10px; padding: 12px; border-top: 1px solid var(--line); background: var(--surface-2); }
+.card-want .recipe { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 10px; }
+.card-want .recipe .n { display: none; }
+.card-want .mats { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.card-want .mat { grid-template-columns: 70px minmax(0, 1fr); gap: 8px; }
+.card-want .recipe-side { text-align: left; display: flex; gap: 14px; }
+.card-more { height: 34px; font-size: var(--step--1); justify-self: center; }
+.more-names { background: none; border: 0; padding: 0; color: var(--blue); cursor: pointer; font-size: inherit; }
 .panel.wide { grid-column: 1 / -1; }
 .form-row.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .want-summary { display: grid; gap: 10px; }
@@ -439,7 +447,7 @@ table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1);
       <!-- 특정 코어 뽑기 -->
       <section class="panel wide" id="want-panel" aria-labelledby="want-title">
         <h2 id="want-title">원하는 코어 뽑기</h2>
-        <p class="panel-sub">갖고 싶은 몬스터 코어를 고르면 그 코어가 나오는 레벨·종류로 합성되는 재료 조합을 실제 몬스터 이름으로 보여줍니다. 도감 카드의 <b>이 코어 뽑기</b>로도 고를 수 있습니다.</p>
+        <p class="panel-sub">갖고 싶은 몬스터 코어를 고르면 그 코어가 나오는 레벨·종류로 합성되는 재료 조합을 실제 몬스터 이름으로 보여줍니다. 도감 카드의 <b>뽑는 조합 보기</b>로 카드 안에서도 바로 볼 수 있습니다.</p>
         <div class="form-row three">
           <label class="field">
             <span class="label">원하는 코어</span>
@@ -710,8 +718,9 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
         '<div class="card-foot"><button type="button" class="add" data-add="' + m.id + '"' +
         (usable ? "" : ' disabled title="원본 계산기에서 제외된 몬스터"') + ">" +
         (usable ? "재료로 담기" : "합성 재료 제외") + "</button>" +
-        (usable ? '<button type="button" class="add" data-want="' + m.id + '">이 코어 뽑기</button>' : "") +
-        "</div></article>";
+        (usable ? '<button type="button" class="add" data-want="' + m.id + '" aria-expanded="' + cardWant.has(m.id) + '">' +
+          (cardWant.has(m.id) ? "조합 닫기" : "뽑는 조합 보기") + "</button>" : "") +
+        '</div><div class="card-want" hidden></div></article>';
     };
     var sections = [], nav = [];
     DB.regions.forEach(function (r, ri) {
@@ -731,6 +740,7 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
     });
     $("floor-nav").innerHTML = nav.join("");
     $("grid").innerHTML = sections.join("");
+    cardWant.forEach(function (_, id) { renderCardWant(id); });
     $("empty").hidden = list.length > 0;
   }
 
@@ -758,11 +768,25 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
     if (b) addToSlot(Number(b.dataset.add));
     var w = e.target.closest("[data-want]");
     if (w) {
-      $("want").value = w.dataset.want;
-      $("have").value = "";
-      renderWant();
-      location.hash = "calc";
-      setTimeout(function () { $("want-panel").scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
+      var id = Number(w.dataset.want);
+      if (cardWant.has(id)) {
+        cardWant.delete(id);
+        var box = document.querySelector("#m-" + id + " .card-want");
+        if (box) { box.hidden = true; box.innerHTML = ""; }
+        w.setAttribute("aria-expanded", "false");
+        w.textContent = "뽑는 조합 보기";
+      } else {
+        cardWant.set(id, { shown: 3 });
+        w.setAttribute("aria-expanded", "true");
+        w.textContent = "조합 닫기";
+        renderCardWant(id);
+      }
+    }
+    var cm = e.target.closest("[data-card-more]");
+    if (cm) {
+      var cid = Number(cm.dataset.cardMore);
+      cardWant.get(cid).shown += 5;
+      renderCardWant(cid);
     }
   });
 
@@ -883,7 +907,7 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
   $("target").value = "100";
   ["req1", "req2"].forEach(function (id) { $(id).innerHTML = '<option value="">없음</option>' + levelOpts; });
 
-  var combos = [], cShown = 0, C_PAGE = 60;
+  var combos = [], cShown = 0, C_PAGE = 20;
   var byLevel = new Map();
   pool.forEach(function (m) {
     if (!byLevel.has(m.level)) byLevel.set(m.level, []);
@@ -950,6 +974,7 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
     }).join(""));
     cShown += batch.length;
     $("f-more").hidden = cShown >= combos.length;
+    $("f-more").textContent = "더 보기 (" + (combos.length - cShown).toLocaleString("ko-KR") + "개 남음)";
   }
   $("rows").addEventListener("click", function (e) {
     var b = e.target.closest("[data-expand]");
@@ -981,19 +1006,13 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
   // ---------- want a specific core ----------
   $("want").innerHTML = monsterOptions(false);
   $("have").innerHTML = monsterOptions(true).replace("코어 선택", "없음");
-  var wantRecipes = [], wShown = 0, W_PAGE = 30;
+  var wantRecipes = [], wShown = 0, W_PAGE = 5, NAME_LIMIT = 4;
 
-  function renderWant() {
-    var target = monsters[Number($("want").value)];
-    var haveV = $("have").value;
-    var have = haveV === "" ? null : monsters[Number(haveV)];
-    var bossMode = target.boss;
-    var lvT = target.level;
+  function computeRecipes(target, have, sortV) {
+    var bossMode = target.boss, lvT = target.level;
     var cand = bossMode ? pool : pool.filter(function (m) { return !m.boss; });
     var rivals = pool.filter(function (m) { return m.level === lvT && m.boss === target.boss; });
-
-    var groups = new Map(), total = 0;
-    var n = cand.length;
+    var groups = new Map(), total = 0, n = cand.length;
     for (var i = 0; i < n; i++) {
       var A = cand[i];
       for (var j = i; j < n; j++) {
@@ -1014,54 +1033,94 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
         }
       }
     }
-    wantRecipes = Array.from(groups.values());
-    var sortV = $("want-sort").value;
-    wantRecipes.sort(function (x, y) {
+    var recipes = Array.from(groups.values());
+    recipes.sort(function (x, y) {
       if (sortV === "many") return y.v - x.v || x.avg - y.avg;
       if (sortV === "avg") return x.avg - y.avg || x.mats[2].lv - y.mats[2].lv;
       return x.mats[2].lv - y.mats[2].lv || x.mats[1].lv - y.mats[1].lv || x.mats[0].lv - y.mats[0].lv;
     });
+    return { recipes: recipes, total: total, rivals: rivals };
+  }
 
+  function namesHTML(list, have) {
+    var fmt = function (m) {
+      return "<span" + ((have && m.id === have.id) ? ' class="have"' : "") + ">" + esc(m.monster) + "</span>";
+    };
+    if (list.length <= NAME_LIMIT + 1) return list.map(fmt).join(", ");
+    return list.slice(0, NAME_LIMIT).map(fmt).join(", ") +
+      ' <button type="button" class="more-names" data-rest="' + esc(list.slice(NAME_LIMIT).map(function (m) { return m.monster; }).join(", ")) +
+      '">외 ' + (list.length - NAME_LIMIT) + "종</button>";
+  }
+  function recipeHTML(g, idx, have) {
+    var mats = g.mats.map(function (mt) {
+      var names = (byLevel.get(mt.lv) || []).filter(function (m) { return m.boss === mt.boss; });
+      if (have) names.sort(function (x, y) { return (y.id === have.id) - (x.id === have.id); });
+      return '<div class="mat"><span class="mat-lv">Lv.' + mt.lv + (mt.boss ? '<span class="bossmark">보스</span>' : "") +
+        '</span><span class="mat-names">' + namesHTML(names, have) + "</span></div>";
+    }).join("");
+    return '<div class="recipe"><span class="n">' + (idx + 1) + '</span><div class="mats">' + mats +
+      '</div><div class="recipe-side"><span>평균<b>' + fmtAvg(g.avg) + "</b></span><span>경우의 수<b>" +
+      g.v.toLocaleString("ko-KR") + "</b></span></div></div>";
+  }
+  function rivalsHTML(target, r) {
+    return '<p class="rivals">결과가 <b>Lv.' + target.level + " " + (target.boss ? "보스" : "일반") + " 코어</b>로 나오면 같은 조건의 코어 <b>" +
+      r.rivals.length + "종</b> 중 하나가 나옵니다" + (r.rivals.length > 1 ? ": " + r.rivals.map(function (m) {
+        return m.id === target.id ? "<b>" + esc(m.monster) + "</b>" : esc(m.monster);
+      }).join(", ") : "") + ". 어떤 코어와 색이 나오는지는 원본 자료에 없습니다. " +
+      (target.boss ? "보스 재료가 1개 이상 들어가야 합니다." : "보스 재료 없이 맞춥니다.") + "</p>";
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest(".more-names");
+    if (!b) return;
+    b.replaceWith(document.createTextNode(", " + b.dataset.rest));
+  });
+
+  function renderWant() {
+    var target = monsters[Number($("want").value)];
+    var haveV = $("have").value;
+    var have = haveV === "" ? null : monsters[Number(haveV)];
+    var r = computeRecipes(target, have, $("want-sort").value);
+    wantRecipes = r.recipes;
     var colors = target.cores.map(function (c) {
       return '<span class="' + COLOR_CLASS[c.color] + '" style="color:var(--c);font-weight:700">' + c.color + "</span> " +
         esc(c.type === "active" ? c.skill : c.effect);
     }).join(" · ");
     $("want-summary").innerHTML =
-      '<div class="want-target"><div class="big"><small>Lv.</small>' + lvT + "</div>" +
+      '<div class="want-target"><div class="big"><small>Lv.</small>' + target.level + "</div>" +
       '<div class="t-name">' + esc(target.monster) + (target.boss ? ' <span class="tag boss">보스</span>' : "") +
       ' <span class="t-sub">' + esc(target.region) + "</span></div>" +
-      '<div class="t-sub">' + colors + "</div></div>" +
-      '<p class="rivals">결과가 <b>Lv.' + lvT + " " + (bossMode ? "보스" : "일반") + " 코어</b>로 나오면 같은 조건의 코어 <b>" +
-      rivals.length + "종</b> 중 하나가 나옵니다: " + rivals.map(function (m) {
-        return m.id === target.id ? "<b>" + esc(m.monster) + "</b>" : esc(m.monster);
-      }).join(", ") + ". 이 중 어떤 코어가 나오는지와 색은 원본 자료에 정해져 있지 않습니다. " +
-      (bossMode ? "보스 코어라 재료에 보스 코어가 1개 이상 들어가야 합니다." : "일반 코어라 보스 재료 없이 맞춥니다.") + "</p>" +
+      '<div class="t-sub">' + colors + "</div></div>" + rivalsHTML(target, r) +
       '<p class="rivals">재료 레벨 조합 <b>' + wantRecipes.length.toLocaleString("ko-KR") + "개</b> · 몬스터 조합 <b>" +
-      total.toLocaleString("ko-KR") + "가지</b>" + (have ? " (" + esc(have.monster) + " 포함)" : "") + "</p>";
-
+      r.total.toLocaleString("ko-KR") + "가지</b>" + (have ? " (" + esc(have.monster) + " 포함)" : "") + "</p>";
     wShown = 0;
     $("want-list").innerHTML = wantRecipes.length ? "" :
-      '<div class="hint-box">이 조건으로 Lv.' + lvT + "을 만드는 조합이 없습니다." + (have ? " 꼭 쓸 재료를 빼 보세요." : "") + "</div>";
+      '<div class="hint-box">이 조건으로 Lv.' + target.level + "을 만드는 조합이 없습니다." + (have ? " 꼭 쓸 재료를 빼 보세요." : "") + "</div>";
     renderWantRows(have);
   }
   function renderWantRows(have) {
     if (have === undefined) { var hv = $("have").value; have = hv === "" ? null : monsters[Number(hv)]; }
     var batch = wantRecipes.slice(wShown, wShown + W_PAGE);
-    $("want-list").insertAdjacentHTML("beforeend", batch.map(function (g, n) {
-      var mats = g.mats.map(function (mt) {
-        var names = (byLevel.get(mt.lv) || []).filter(function (m) { return m.boss === mt.boss; });
-        return '<div class="mat"><span class="mat-lv">Lv.' + mt.lv + (mt.boss ? '<span class="bossmark">보스</span>' : "") +
-          '</span><span class="mat-names">' + names.map(function (m) {
-            var cls = (have && m.id === have.id) ? ' class="have"' : "";
-            return "<span" + cls + ">" + esc(m.monster) + "</span>";
-          }).join(", ") + "</span></div>";
-      }).join("");
-      return '<div class="recipe"><span class="n">' + (wShown + n + 1) + '</span><div class="mats">' + mats +
-        '</div><div class="recipe-side"><span>평균<b>' + fmtAvg(g.avg) + "</b></span><span>경우의 수<b>" +
-        g.v.toLocaleString("ko-KR") + "</b></span></div></div>";
-    }).join(""));
+    $("want-list").insertAdjacentHTML("beforeend", batch.map(function (g, n) { return recipeHTML(g, wShown + n, have); }).join(""));
     wShown += batch.length;
-    $("want-more").hidden = wShown >= wantRecipes.length;
+    var left = wantRecipes.length - wShown;
+    $("want-more").hidden = left <= 0;
+    $("want-more").textContent = "더 보기 (" + left.toLocaleString("ko-KR") + "개 남음)";
+  }
+
+  // inline recipes inside catalog cards
+  var cardWant = new Map(); // monster id -> { recipes, shown }
+  function renderCardWant(id) {
+    var box = document.querySelector('#m-' + id + ' .card-want');
+    if (!box) return;
+    var st = cardWant.get(id), target = monsters[id];
+    if (!st.r) st.r = computeRecipes(target, null, "easy");
+    var rec = st.r.recipes;
+    box.innerHTML = rivalsHTML(target, st.r) +
+      (rec.length ? '<div class="want-list">' + rec.slice(0, st.shown).map(function (g, i) { return recipeHTML(g, i, null); }).join("") + "</div>" :
+        '<div class="hint-box">이 코어를 만드는 조합이 없습니다.</div>') +
+      (rec.length > st.shown ? '<button type="button" class="btn ghost card-more" data-card-more="' + id + '">더 보기 (' +
+        (rec.length - st.shown).toLocaleString("ko-KR") + "개 남음)</button>" : "");
+    box.hidden = false;
   }
   ["want", "have", "want-sort"].forEach(function (id) { $(id).addEventListener("change", renderWant); });
   $("want-more").addEventListener("click", function () { renderWantRows(); });
