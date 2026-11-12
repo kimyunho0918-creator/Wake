@@ -1,465 +1,951 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>수업 시간에 자는 얘들 깨우기</title>
-  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    body { 
-      background-color: #1e272e; 
-      color: #d2dae2; 
-      font-family: 'Noto Sans KR', sans-serif; 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      min-height: 100vh; 
-      margin: 0; 
-    }
-    
-    h2, h3, button, #golden-banner, .desk, #teacher-speech, .result-text {
-      font-family: 'Jua', sans-serif; 
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>세레스 코어 아카이브</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: sticky masthead with two views; catalog = chip filters over a card grid, calc = two panels side by side (stack on phone). */
+:root {
+  --bg: #eef0f5;
+  --surface: #ffffff;
+  --surface-2: #f5f6fa;
+  --line: #d9dce6;
+  --fg: #1b1d2a;
+  --muted: #5d6275;
+  --accent: #8a5a00;
+  --accent-bg: #fff1cf;
+  --accent-line: #e2b64a;
+  --red: #c4343d;   --red-bg: #fdeced;
+  --blue: #2a5fc9;  --blue-bg: #e9f0fd;
+  --green: #1f8a4c; --green-bg: #e6f5ec;
+  --focus: #2a5fc9;
+  --shadow: 0 1px 2px rgba(20, 22, 40, .06), 0 4px 14px rgba(20, 22, 40, .05);
 
-    #game-container { 
-      width: 100%; 
-      max-width: 850px; 
-      background: #2f3542; 
-      padding: 40px; 
-      border-radius: 15px; 
-      box-shadow: 0 15px 40px rgba(0,0,0,0.6); 
-      text-align: center; 
-      position: relative; 
-      min-height: 600px; /* 컨테이너 최소 높이 고정 */
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    
-    /* 로그인 화면 (학번/이름 입력 화면 풀사이즈) */
-    #login-screen { 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: center;
-      height: 100%;
-    }
-    #login-screen h2 { color: #f5f6fa; font-size: 42px; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-    #login-screen p { color: #a4b0be; margin-bottom: 40px; font-size: 18px; }
-    
-    .input-group { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 20px; 
-      margin-bottom: 40px; 
-      width: 100%;
-      align-items: center;
-    }
-    
-    input { 
-      padding: 18px; font-size: 20px; border-radius: 10px; 
-      border: 3px solid #57606f; background: #1e272e; color: #f5f6fa; 
-      width: 280px; 
-      text-align: center; outline: none; transition: all 0.3s; 
-      font-family: 'Noto Sans KR', sans-serif;
-      margin: 0; 
-    }
-    input:focus { border-color: #eccc68; box-shadow: 0 0 15px rgba(236, 204, 104, 0.4); transform: scale(1.05); }
-    
-    button { 
-      padding: 16px 50px; font-size: 24px; background: #3742fa; color: white; 
-      border: none; border-radius: 10px; cursor: pointer; 
-      box-shadow: 0 8px 0 #272fbd, 0 10px 15px rgba(0,0,0,0.3); 
-      transition: all 0.1s ease;
-    }
-    button:active { transform: translateY(6px); box-shadow: 0 2px 0 #272fbd, 0 4px 6px rgba(0,0,0,0.3); }
+  --font-display: "Black Han Sans", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
-    /* 게임 화면 */
-    #game-screen { display: none; width: 100%; }
-    
-    /* 3D 칠판 영역 */
-    #chalkboard-area { 
-      position: relative; background: #1e5646; 
-      border: 12px solid #5c3a21; 
-      border-radius: 8px; margin-bottom: 30px; min-height: 180px; 
-      display: flex; flex-direction: column; justify-content: center; align-items: center; 
-      box-shadow: inset 0 0 30px rgba(0,0,0,0.7), 0 10px 20px rgba(0,0,0,0.4); 
-    }
-    
-    #teacher-sprite { font-size: 65px; z-index: 5; margin-bottom: 15px; animation: moveTeacher 4s infinite ease-in-out; text-shadow: 2px 5px 10px rgba(0,0,0,0.4); }
-    #teacher-speech { 
-      position: absolute; top: 25px; right: 40px; background: #ffffff; color: #2d3436; 
-      padding: 10px 20px; border-radius: 20px; font-size: 18px; display: none; z-index: 10; 
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-    }
-    #teacher-speech::after { content: ''; position: absolute; left: -8px; top: 15px; border-top: 8px solid transparent; border-right: 12px solid #ffffff; border-bottom: 8px solid transparent; }
+  --step--1: .8125rem;
+  --step-0: .9375rem;
+  --step-1: 1.0625rem;
+  --step-2: 1.375rem;
+  --step-3: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12131b; --surface: #1b1d28; --surface-2: #222533; --line: #2f3344;
+    --fg: #e8e9f1; --muted: #9a9fb4;
+    --accent: #f3c55e; --accent-bg: #3a2f14; --accent-line: #8f6d22;
+    --red: #ff7a80; --red-bg: #3a1c21;
+    --blue: #7fa8ff; --blue-bg: #1a2742;
+    --green: #5fd38f; --green-bg: #15301f;
+    --focus: #7fa8ff;
+    --shadow: 0 1px 2px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12131b; --surface: #1b1d28; --surface-2: #222533; --line: #2f3344;
+  --fg: #e8e9f1; --muted: #9a9fb4;
+  --accent: #f3c55e; --accent-bg: #3a2f14; --accent-line: #8f6d22;
+  --red: #ff7a80; --red-bg: #3a1c21;
+  --blue: #7fa8ff; --blue-bg: #1a2742;
+  --green: #5fd38f; --green-bg: #15301f;
+  --focus: #7fa8ff;
+  --shadow: 0 1px 2px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
 
-    .status-info { 
-      width: 100%; display: flex; justify-content: space-around; font-size: 18px; font-weight: bold; 
-      background: rgba(0,0,0,0.3); padding: 12px 15px; border-radius: 0 0 4px 4px; 
-      margin-top: auto; z-index: 2; color: #f5f6fa; 
-    }
-    
-    #golden-banner { display: none; font-size: 26px; color: #eccc68; text-shadow: 2px 2px 0 #ff4757; background: #ff4757; padding: 15px; border-radius: 10px; margin-bottom: 20px; animation: blink 1s infinite; z-index: 20; box-shadow: 0 6px 20px rgba(255, 71, 87, 0.5); }
-    
-    @keyframes blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.85; transform: scale(1.02); } }
-    @keyframes moveTeacher { 0%, 100% { transform: translateX(0) rotate(0deg); } 25% { transform: translateX(-12px) rotate(-1.5deg); } 75% { transform: translateX(12px) rotate(1.5deg); } }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.55;
+}
+[hidden] { display: none !important; }
+a { color: var(--blue); }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-    /* 교실 바닥 & 3D 격자 */
-    #classroom-wrapper { 
-      position: relative; width: 100%; padding: 25px; 
-      background: rgba(0,0,0,0.15); border-radius: 12px;
-      box-shadow: inset 0 10px 30px rgba(0,0,0,0.4);
-      perspective: 900px; 
-    }
-    #classroom-grid { 
-      display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; 
-      transform: rotateX(12deg); 
-      transform-style: preserve-3d;
-    }
-    
-    .desk-wrapper { position: relative; height: 80px; }
-    
-    .desk { 
-      height: 100%; background: linear-gradient(145deg, #d1a87c, #b3855c); border-radius: 8px; 
-      display: flex; flex-direction: column; align-items: center; justify-content: center; 
-      font-size: 18px; color: #4a2e15; text-shadow: 1px 1px 0px rgba(255,255,255,0.4);
-      cursor: pointer; user-select: none; transition: all 0.05s ease; z-index: 1; 
-      box-shadow: 0 8px 0 #8b5a2b, 0 12px 20px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.3);
-      position: relative; top: 0;
-      /* 모바일 터치 시 하이라이트 방지 */
-      -webkit-tap-highlight-color: transparent; 
-    }
-    .desk:active { top: 6px; box-shadow: 0 2px 0 #8b5a2b, 0 5px 8px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.3); }
-    
-    .desk.sleeping { 
-      background: linear-gradient(145deg, #ff6b81, #ff4757); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-      box-shadow: 0 8px 0 #c0392b, 0 12px 20px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.4); animation: shake 0.4s infinite; 
-    }
-    .desk.sleeping:active { top: 6px; box-shadow: 0 2px 0 #c0392b, 0 5px 8px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.4); }
-    
-    .complaint-bubble { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: #eccc68; color: #2f3542; padding: 6px 12px; font-size: 13px; font-weight: bold; border-radius: 8px; white-space: nowrap; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 15; pointer-events: none; animation: fadeUp 0.8s forwards; font-family: 'Noto Sans KR', sans-serif; }
-    @keyframes fadeUp { 0% { opacity: 0; transform: translate(-50%, 0); } 20% { opacity: 1; transform: translate(-50%, -10px); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -20px); } }
+.wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
 
-    .orb { position: absolute; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; z-index: 10; animation: float 2s infinite ease-in-out; border: 2px solid rgba(255,255,255,0.8); -webkit-tap-highlight-color: transparent; }
-    .orb.blue { background: radial-gradient(circle at 30% 30%, #74b9ff, #0984e3); box-shadow: 0 10px 15px rgba(9,132,227,0.4); top: -20px; left: 50%; transform: translateX(-50%); }
-    .orb.green { background: radial-gradient(circle at 30% 30%, #55efc4, #00b894); box-shadow: 0 10px 15px rgba(0,184,148,0.4); bottom: -15px; left: 50%; transform: translateX(-50%); }
-    .orb.gold { background: radial-gradient(circle at 30% 30%, #ffeaa7, #fdcb6e); box-shadow: 0 10px 15px rgba(253,203,110,0.4); top: 30px; left: -15px; }
-    @keyframes shake { 0%, 100% { transform: rotate(0deg); } 20%, 60% { transform: rotate(-3deg); } 40%, 80% { transform: rotate(3deg); } }
-    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+/* ---- masthead ---- */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.masthead {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.masthead-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 10px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--fg); }
+.brand-text { font-family: var(--font-display); font-size: var(--step-1); letter-spacing: .01em; }
+.gem { display: inline-grid; grid-template-columns: repeat(3, 8px); gap: 3px; }
+.gem i { width: 8px; height: 14px; border-radius: 2px; transform: skewX(-12deg); }
+.gem .r { background: var(--red); } .gem .b { background: var(--blue); } .gem .g { background: var(--green); }
+.tabs { display: flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 999px; border: 1px solid var(--line); }
+.tab { padding: 6px 14px; border-radius: 999px; text-decoration: none; color: var(--muted); font-weight: 600; font-size: var(--step--1); }
+.tab[aria-current="page"] { background: var(--fg); color: var(--bg); }
 
-    /* 결과 화면 UI */
-    #result-screen {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      width: 100%;
-    }
-    #result-title { font-size: 42px; color: #f5f6fa; margin-bottom: 10px; text-shadow: 2px 2px 5px rgba(0,0,0,0.4); }
-    #result-reason { font-size: 18px; color: #a4b0be; margin-bottom: 30px; }
-    #result-score { font-size: 28px; color: #d2dae2; background: rgba(0,0,0,0.2); padding: 15px 30px; border-radius: 12px; margin-bottom: 20px; }
-    #result-rank { font-size: 80px; font-weight: bold; margin: 15px 0; text-shadow: 3px 5px 15px rgba(0,0,0,0.5); }
-    #result-desc { font-size: 22px; color: #f5f6fa; margin-bottom: 50px; }
-    
-  </style>
+/* ---- view head ---- */
+.view { padding-block: 28px 40px; }
+.view-head { display: grid; gap: 4px; margin-bottom: 18px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: var(--step-3); line-height: 1.15; margin: 0; text-wrap: balance; }
+h2 { font-size: var(--step-2); margin: 0; font-weight: 700; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 65ch; }
+
+/* ---- toolbar & filters ---- */
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
+.search { flex: 1 1 260px; min-width: 0; }
+.search input, .sort select, .field select, .slot select {
+  width: 100%; height: 42px; padding: 0 12px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+}
+.sort { flex: 0 0 auto; }
+.btn {
+  height: 42px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface); font-weight: 600; cursor: pointer;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.ghost { background: transparent; }
+.link { background: none; border: 0; color: var(--blue); cursor: pointer; padding: 4px 0; font-size: var(--step--1); }
+.filter-toggle { display: none; }
+
+.filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 12px 24px; margin-top: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.fgroup { min-width: 0; }
+.fgroup h3 { font-size: var(--step--1); color: var(--muted); margin: 0 0 6px; font-weight: 600; letter-spacing: .04em; }
+.fgroup h3 small { font-weight: 400; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface-2);
+  font-size: var(--step--1); cursor: pointer; white-space: nowrap;
+}
+.chip small { font-family: var(--font-mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chip[aria-pressed="true"] small { color: inherit; opacity: .7; }
+.chip .dot { width: 9px; height: 9px; border-radius: 50%; }
+.chip:disabled { opacity: .4; cursor: default; }
+
+.summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 16px 0 10px; flex-wrap: wrap; }
+.count { color: var(--muted); font-size: var(--step--1); font-variant-numeric: tabular-nums; }
+
+/* ---- floors ---- */
+.floor-nav {
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--mast-h, 62px)); z-index: 4;
+  display: flex; gap: 6px; overflow-x: auto; padding-block: 10px; margin-bottom: 6px;
+  background: var(--bg); scrollbar-width: thin;
+}
+.floor-link {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-weight: 600;
+  font-size: var(--step--1); cursor: pointer; white-space: nowrap;
+}
+.floor-link small { font-family: var(--font-mono); font-size: 11px; color: var(--muted); font-weight: 500; }
+.floor-link:hover { border-color: var(--muted); }
+.floor-link:disabled { opacity: .4; cursor: default; }
+.floors { display: grid; gap: 32px; }
+.floor { display: grid; gap: 12px; }
+.floor-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-bottom: 8px; border-bottom: 2px solid var(--fg); }
+.floor-head h2 { font-family: var(--font-display); font-weight: 400; font-size: var(--step-2); }
+.floor-meta { color: var(--muted); font-size: var(--step--1); font-variant-numeric: tabular-nums; }
+
+/* ---- monster cards ---- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; align-items: start; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 14px 14px 10px; }
+.card-head h3 { margin: 0; font-size: var(--step-1); font-weight: 700; line-height: 1.3; }
+.tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+.tag.boss { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-line); font-weight: 700; }
+.lv { font-family: var(--font-mono); font-weight: 700; font-size: var(--step-1); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lv small { font-size: 11px; color: var(--muted); font-weight: 500; margin-right: 2px; }
+.cores { display: grid; }
+.core { display: grid; grid-template-columns: 4px 1fr; border-top: 1px solid var(--line); }
+.core::before { content: ""; background: var(--c); }
+.core-body { padding: 10px 14px 11px 12px; min-width: 0; }
+.core-top { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
+.core-color { font-size: 11px; font-weight: 700; color: var(--c); }
+.core-skill { font-weight: 700; }
+.core-kind { font-size: 11px; color: var(--muted); }
+.core-lv { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-left: auto; }
+.core-effect { margin: 0; font-size: var(--step--1); overflow-wrap: anywhere; }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; font-size: 11.5px; color: var(--muted); }
+.meta b { font-weight: 600; color: var(--fg); font-family: var(--font-mono); font-size: 11px; }
+.ult { font-size: 10.5px; font-weight: 700; padding: 0 6px; border-radius: 999px; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-line); }
+.c-red { --c: var(--red); } .c-blue { --c: var(--blue); } .c-green { --c: var(--green); }
+.core.dim { opacity: .45; }
+.card-foot { display: flex; justify-content: flex-end; padding: 6px 10px; border-top: 1px solid var(--line); background: var(--surface-2); }
+.add { font-size: var(--step--1); font-weight: 600; background: none; border: 0; color: var(--blue); cursor: pointer; padding: 4px 6px; }
+.add:disabled { color: var(--muted); cursor: default; }
+mark { background: var(--accent-bg); color: inherit; border-radius: 2px; padding: 0 1px; }
+
+.empty { text-align: center; padding: 48px 16px; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius); }
+.empty strong { color: var(--fg); }
+.pager { display: flex; justify-content: center; margin-top: 16px; }
+
+/* ---- calculator ---- */
+.calc-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; display: grid; gap: 14px; }
+.panel-sub { margin: -6px 0 0; color: var(--muted); font-size: var(--step--1); }
+.slots { display: grid; gap: 8px; }
+.slot { display: grid; grid-template-columns: 56px 1fr; align-items: center; gap: 8px; }
+.slot-n { font-size: var(--step--1); color: var(--muted); font-weight: 600; }
+.row-actions { display: flex; justify-content: flex-end; margin-top: -8px; }
+.predict-out { display: grid; gap: 12px; }
+.result-hero { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: center; padding: 14px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); }
+.result-hero .big { grid-row: span 2; font-family: var(--font-mono); font-weight: 700; font-size: 2.25rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.result-hero .big small { font-size: .9rem; color: var(--muted); }
+.result-hero .calc-line { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); overflow-wrap: anywhere; }
+.result-hero .kind { font-weight: 700; }
+.warn { padding: 10px 12px; border-radius: 8px; background: var(--red-bg); color: var(--red); font-size: var(--step--1); font-weight: 600; }
+.hint-box { padding: 12px; border-radius: 8px; border: 1px dashed var(--line); color: var(--muted); font-size: var(--step--1); }
+.outcomes h3 { font-size: var(--step--1); color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+.outcome-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.outcome { font-size: var(--step--1); padding: 3px 9px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; }
+.outcome:hover { border-color: var(--muted); }
+
+.form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.label { font-size: var(--step--1); color: var(--muted); font-weight: 600; }
+.label small { font-weight: 400; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 3px; height: 42px; }
+.seg label { display: grid; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg span { display: grid; place-items: center; border-radius: 6px; font-size: var(--step--1); font-weight: 600; color: var(--muted); cursor: pointer; }
+.seg input:checked + span { background: var(--surface); color: var(--fg); box-shadow: var(--shadow); }
+.seg input:focus-visible + span { outline: 2px solid var(--focus); }
+.note { margin: 0; font-size: 12.5px; color: var(--muted); }
+.find-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.find-stats div { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; display: grid; }
+.find-stats span { font-size: 11.5px; color: var(--muted); }
+.find-stats b { font-family: var(--font-mono); font-size: var(--step-1); font-variant-numeric: tabular-nums; }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1); font-variant-numeric: tabular-nums; }
+.combo th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 8px 10px; background: var(--surface-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+.combo td { padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.combo tr:last-child td { border-bottom: 0; }
+.combo .n { color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+.lvs { display: flex; gap: 4px; }
+.lvs span { font-family: var(--font-mono); font-weight: 700; min-width: 38px; text-align: center; padding: 2px 6px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--line); }
+.mono { font-family: var(--font-mono); }
+.expand { background: none; border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; cursor: pointer; font-size: 12px; color: var(--muted); }
+.detail td { background: var(--surface-2); white-space: normal; }
+.detail-grid { display: grid; gap: 6px; padding: 4px 0; }
+.detail-grid div { display: grid; grid-template-columns: 52px 1fr; gap: 8px; font-size: 12.5px; }
+.detail-grid b { font-family: var(--font-mono); }
+.bossmark { color: var(--accent); font-weight: 700; }
+.table-empty { text-align: center; color: var(--muted); padding: 28px 10px !important; white-space: normal !important; }
+
+.foot { padding-block: 8px 40px; color: var(--muted); font-size: 12.5px; }
+.foot p { margin: 0; max-width: 80ch; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  background: var(--fg); color: var(--bg); padding: 9px 16px; border-radius: 999px;
+  font-size: var(--step--1); font-weight: 600; z-index: 20; box-shadow: var(--shadow);
+  max-width: calc(100% - 32px);
+}
+
+@media (max-width: 860px) {
+  .calc-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .filter-toggle { display: inline-block; }
+  .filters:not(.open) { display: none; }
+  .brand-text { font-size: var(--step-0); }
+  .form-row { grid-template-columns: minmax(0, 1fr); }
+  .find-stats b { font-size: var(--step-0); }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
 </head>
 <body>
-
-  <div id="game-container">
-    
-    <div id="login-screen">
-      <h2>🏫 수업 시간에 자는 얘들 깨우기</h2>
-      <p>학번과 이름을 입력하고 게임을 시작하세요!</p>
-      <div class="input-group">
-        <input type="text" id="student-id" placeholder="학번 (예: 30101)" maxlength="10">
-        <input type="text" id="student-name" placeholder="이름" maxlength="10">
-      </div>
-      <button onclick="startGame()">게임 시작</button>
-    </div>
-
-    <div id="game-screen">
-      <div id="golden-banner">⚡ 이제 곧 집간다! ⚡</div>
-      
-      <div id="chalkboard-area">
-        <div id="teacher-speech">말 좀 듣자 얘들아..</div>
-        <div id="teacher-sprite">👨‍🏫</div>
-        
-        <div class="status-info">
-          <div>⏱️ <span id="timer">60</span>s</div>
-          <div id="anger-bar">💢 분노: 0 / 6</div>
-          <div>🏆 <span id="score">0</span>pt</div>
-        </div>
-      </div>
-      
-      <div id="active-buff" style="font-size: 16px; color: #ff6b81; margin-bottom: 15px; height: 22px; font-weight: bold;"></div>
-
-      <div id="classroom-wrapper">
-        <div id="classroom-grid"></div>
-      </div>
-    </div>
-
-    <div id="result-screen">
-      <h2 id="result-title" class="result-text">결과</h2>
-      <div id="result-reason">사유</div>
-      <div id="result-score" class="result-text">최종 점수: 0점</div>
-      
-      <div id="result-rank" class="result-text">A</div>
-      <div id="result-desc" class="result-text">칭호</div>
-      
-      <button onclick="returnToMain()">처음으로 돌아가기</button>
-    </div>
-
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="brand" href="#catalog" aria-label="세레스 코어 아카이브 처음으로">
+      <span class="gem" aria-hidden="true"><i class="r"></i><i class="b"></i><i class="g"></i></span>
+      <span class="brand-text">세레스 코어 아카이브</span>
+    </a>
+    <nav class="tabs" aria-label="메뉴">
+      <a class="tab" href="#catalog" data-view="catalog">코어 도감</a>
+      <a class="tab" href="#calc" data-view="calc">합성 계산기</a>
+    </nav>
   </div>
+</header>
 
-  <script>
-    const grid = document.getElementById('classroom-grid');
-    const teacherSprite = document.getElementById('teacher-sprite');
-    const teacherSpeech = document.getElementById('teacher-speech');
-    const angerBar = document.getElementById('anger-bar');
-    
-    let score = 0, anger = 0, timeLeft = 60;
-    let gameInterval, timerInterval, orbInterval;
-    const desks = [];
-    
-    let currentState = "NORMAL"; 
-    let stateTimeout = null;
-    let currentUserId = "";
-    let currentUserName = "";
-    let isSpurtMode = false;
+<main class="wrap">
+  <!-- ===== 도감 ===== -->
+  <section id="view-catalog" class="view" aria-labelledby="catalog-title">
+    <div class="view-head">
+      <h1 id="catalog-title">코어 도감</h1>
+      <p class="lede" id="catalog-lede">몬스터마다 빨강·파랑·초록 세 가지 코어를 남깁니다.</p>
+    </div>
 
-    function startGame() {
-      currentUserId = document.getElementById('student-id').value.trim();
-      currentUserName = document.getElementById('student-name').value.trim();
-      if(!currentUserId || !currentUserName) { alert("학번과 이름을 입력해주세요!"); return; }
-      
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('result-screen').style.display = 'none';
-      document.getElementById('game-screen').style.display = 'block';
-      initGame();
+    <div class="toolbar">
+      <label class="search">
+        <span class="sr">검색</span>
+        <input id="q" type="search" placeholder="몬스터, 스킬, 효과 또는 레벨로 검색" autocomplete="off">
+      </label>
+      <label class="sort">
+        <span class="sr">정렬</span>
+        <select id="sort">
+          <option value="lv-asc">레벨 낮은 순</option>
+          <option value="lv-desc">레벨 높은 순</option>
+          <option value="name">이름순</option>
+        </select>
+      </label>
+      <button id="toggle-filters" class="btn ghost filter-toggle" type="button" aria-expanded="false" aria-controls="filters">필터</button>
+    </div>
+
+    <div id="filters" class="filters">
+      <div class="fgroup"><h3>지역</h3><div class="chips" data-group="region"></div></div>
+      <div class="fgroup"><h3>몬스터</h3><div class="chips" data-group="boss"></div></div>
+      <div class="fgroup"><h3>코어 색</h3><div class="chips" data-group="color"></div></div>
+      <div class="fgroup"><h3>종류</h3><div class="chips" data-group="kind"></div></div>
+      <div class="fgroup"><h3>무기군 <small>액티브</small></h3><div class="chips" data-group="weapon"></div></div>
+      <div class="fgroup"><h3>스탯 <small>패시브</small></h3><div class="chips" data-group="stat"></div></div>
+      <div class="fgroup"><h3>생활</h3><div class="chips" data-group="life"></div></div>
+    </div>
+
+    <div class="summary">
+      <span id="count" class="count"></span>
+      <button id="reset" class="link" type="button">필터 모두 지우기</button>
+    </div>
+
+    <nav id="floor-nav" class="floor-nav" aria-label="층 바로가기"></nav>
+    <div id="grid" class="floors"></div>
+    <div id="empty" class="empty" hidden>
+      <strong>조건에 맞는 코어가 없습니다.</strong>
+      <p>검색어를 줄이거나 필터를 지워 보세요.</p>
+    </div>
+  </section>
+
+  <!-- ===== 계산기 ===== -->
+  <section id="view-calc" class="view" aria-labelledby="calc-title" hidden>
+    <div class="view-head">
+      <h1 id="calc-title">합성 계산기</h1>
+      <p class="lede">코어 3개의 평균 레벨에 가장 가까운 서버 코어 레벨이 결과가 됩니다. 정확히 중간이면 낮은 레벨이 우선입니다.</p>
+    </div>
+
+    <div class="calc-grid">
+      <!-- 결과 예측 -->
+      <section class="panel" aria-labelledby="predict-title">
+        <h2 id="predict-title">결과 미리 보기</h2>
+        <p class="panel-sub">재료 코어 3개를 고르면 결과 레벨과 나올 수 있는 코어를 보여줍니다. 도감 카드의 <b>재료로 담기</b>로도 채울 수 있습니다.</p>
+        <div class="slots">
+          <label class="slot"><span class="slot-n">재료 1</span><select id="s1"></select></label>
+          <label class="slot"><span class="slot-n">재료 2</span><select id="s2"></select></label>
+          <label class="slot"><span class="slot-n">재료 3</span><select id="s3"></select></label>
+        </div>
+        <div class="row-actions">
+          <button id="clear-slots" class="link" type="button">재료 비우기</button>
+        </div>
+        <div id="predict-out" class="predict-out" aria-live="polite"></div>
+      </section>
+
+      <!-- 조합 찾기 -->
+      <section class="panel" aria-labelledby="find-title">
+        <h2 id="find-title">조합 찾기</h2>
+        <p class="panel-sub">원하는 결과 레벨을 정하면 가능한 재료 레벨 조합을 평균이 낮은 순으로 보여줍니다.</p>
+        <div class="form-row">
+          <label class="field">
+            <span class="label">목표 레벨</span>
+            <select id="target"></select>
+          </label>
+          <div class="field">
+            <span class="label">목표 종류</span>
+            <div class="seg" role="radiogroup" aria-label="목표 코어 종류">
+              <label><input type="radio" name="bossmode" value="no" checked><span>일반 코어</span></label>
+              <label><input type="radio" name="bossmode" value="yes"><span>보스 코어</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="field">
+            <span class="label">꼭 넣을 재료 레벨 1 <small>선택</small></span>
+            <select id="req1"></select>
+          </label>
+          <label class="field">
+            <span class="label">꼭 넣을 재료 레벨 2 <small>선택</small></span>
+            <select id="req2"></select>
+          </label>
+        </div>
+        <p class="note">보스 목표는 보스 재료가 1개 이상, 일반 목표는 보스 재료 없이 맞춘 조합만 셉니다. 같은 코어 3개는 잠재 각성이라 빠집니다. 무법의 섬 13종은 원본 계산기처럼 재료에서 제외했습니다.</p>
+        <div class="find-stats">
+          <div><span>조합</span><b id="f-count">—</b></div>
+          <div><span>가장 낮은 평균</span><b id="f-min">—</b></div>
+          <div><span>재료 후보</span><b id="f-pool">—</b></div>
+        </div>
+        <div class="table-wrap">
+          <table class="combo">
+            <thead><tr><th>#</th><th>재료 레벨</th><th>평균</th><th>보스 재료</th><th>경우의 수</th><th><span class="sr">펼치기</span></th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="pager"><button id="f-more" class="btn ghost" type="button" hidden>더 보기</button></div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p>데이터: 몬스터 <span id="m-total"></span>종 · 코어 <span id="c-total"></span>개. 팬메이드 도감 <a href="https://mettigimotti.github.io/seres-core-calc/" target="_blank" rel="noopener">seres-core-calc</a>에서 2026-11-10 옮긴 자료로, 원본의 오탈자도 그대로 있습니다.</p>
+</footer>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sourceRepo":"https://github.com/mettigimotti/seres-core-calc","fetchedAt":"2026-11-10","note":"팬메이드 코어 도감/합성 계산기에서 추출. 코어는 몬스터별 빨강/파랑/초록 3종.","counts":{"monsters":161,"cores":506,"active":291,"passive":215},"regions":["튜토리얼 섬","균열 1층","균열 2층","균열 3층","균열 4층","균열 5층","균열 6층","균열 7층","무법의 섬"],"synthesisLevels":[10,20,25,30,40,50,56,59,60,68,69,70,71,80,89,90,92,93,94,95,96,97,98,100,101,102,104,105,106,108,110,112,114,115,116,117,118,119,120,121,124,125,127,128,129,130,135,140,143,145,146,148,150,154,157,160,163,165,170],"monsters":[{"monster":"독 버섯","level":10,"boss":false,"region":"튜토리얼 섬","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":10,"type":"passive","effect":"공격력 +7","statTags":["공격력"]},{"color":"파랑","level":10,"type":"passive","effect":"이동 속도 +7%","statTags":["이동 속도"]},{"color":"초록","level":10,"type":"passive","effect":"최대 체력 +70","statTags":["최대 HP"]}]},{"monster":"변종 버섯","level":10,"boss":false,"region":"튜토리얼 섬","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":10,"type":"passive","effect":"공격력 +5","statTags":["공격력"]},{"color":"파랑","level":10,"type":"passive","effect":"이동 속도 +5%","statTags":["이동 속도"]},{"color":"초록","level":10,"type":"passive","effect":"최대 체력 +50","statTags":["최대 HP"]}]},{"monster":"슬라임 궁수","level":10,"boss":false,"region":"튜토리얼 섬","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":10,"type":"active","skill":"강타","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":5,"mp":10,"ultimate":false,"effect":"근접 220% / 활 180% 피해로 1회 공격"},{"color":"파랑","level":10,"type":"passive","effect":"골드 획득 +5%","statTags":["골드 획득"]},{"color":"초록","level":10,"type":"passive","effect":"최대 체력 +100","statTags":["최대 HP"]}]},{"monster":"슬라임 마법사","level":10,"boss":false,"region":"튜토리얼 섬","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":10,"type":"passive","effect":"치명타 피해 +10%","statTags":["치명타 피해"]},{"color":"파랑","level":10,"type":"active","skill":"도약","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":7,"mp":10,"ultimate":false,"effect":"짧은 거리를 도약 (약 2블록)"},{"color":"초록","level":10,"type":"passive","effect":"방어력 +5 · 최대 체력 +100","statTags":["방어력","최대 HP"]}]},{"monster":"슬라임 영웅","level":10,"boss":false,"region":"튜토리얼 섬","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":10,"type":"active","skill":"휩쓸기","weaponGroup":"물리 근접","combatType":"물리 근접","cooldown":5,"mp":10,"ultimate":false,"effect":"150% 피해로 1회 공격, 최대 5마리 타격"},{"color":"파랑","level":10,"type":"passive","effect":"경험치 획득 +5%","statTags":["경험치 획득"]},{"color":"초록","level":10,"type":"passive","effect":"방어력 +7 · 최대 체력 +100","statTags":["방어력","최대 HP"]}]},{"monster":"슬라임 전사","level":10,"boss":false,"region":"튜토리얼 섬","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":10,"type":"passive","effect":"공격력 +10","statTags":["공격력"]},{"color":"파랑","level":10,"type":"passive","effect":"이동 속도 +10%","statTags":["이동 속도"]},{"color":"초록","level":10,"type":"active","skill":"회복","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":15,"mp":10,"ultimate":false,"effect":"체력을 100 회복한다."}]},{"monster":"슬라임 킹","level":10,"boss":true,"region":"튜토리얼 섬","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":10,"type":"active","skill":"소드스매쉬","weaponGroup":"검","cooldown":60,"mp":60,"ultimate":true,"effect":"1초 차징 후 전방 슬래시 웨이브 300% 피해 · 경로 내 모든 적 타격"},{"color":"파랑","level":10,"type":"active","skill":"정조준","weaponGroup":"활","cooldown":60,"mp":60,"ultimate":true,"effect":"1초 차징 후 관통 화살 200% 피해 · 무조건 치명타 · 경로 내 모든 적 타격"},{"color":"초록","level":10,"type":"active","skill":"태산","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":60,"mp":60,"ultimate":true,"effect":"최대 HP의 50%에 해당하는 보호막을 10초간 생성"}]},{"monster":"고블린","level":10,"boss":false,"region":"균열 1층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":10,"type":"passive","effect":"공격력 +15 · 치명타 피해 +10%","statTags":["공격력","치명타 피해"]},{"color":"파랑","level":10,"type":"passive","effect":"경험치 획득 +5% · 골드 획득 +5%","statTags":["경험치 획득","골드 획득"]},{"color":"초록","level":10,"type":"active","skill":"웅크리기","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":15,"mp":10,"ultimate":false,"effect":"100의 피해를 막아주는 보호막을 5초간 생성"}]},{"monster":"고블린 궁수","level":10,"boss":false,"region":"균열 1층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":10,"type":"active","skill":"관통화살","weaponGroup":"활","cooldown":5,"mp":10,"ultimate":false,"effect":"130% 피해로 최대 3명 공격"},{"color":"파랑","level":10,"type":"passive","effect":"골드 획득 +10%","statTags":["골드 획득"]},{"color":"초록","level":10,"type":"passive","effect":"방어력 +10 · 최대 체력 +150","statTags":["방어력","최대 HP"]}]},{"monster":"고블린 전사","level":10,"boss":false,"region":"균열 1층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":10,"type":"active","skill":"강사","weaponGroup":"활","cooldown":5,"mp":10,"ultimate":false,"effect":"210% 피해로 1회 공격"},{"color":"파랑","level":10,"type":"passive","effect":"경험치 획득 +10%","statTags":["경험치 획득"]},{"color":"초록","level":10,"type":"passive","effect":"최대 체력 +200","statTags":["최대 HP"]}]},{"monster":"고블린 사제","level":20,"boss":false,"region":"균열 1층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":20,"type":"active","skill":"매직미사일","weaponGroup":"기타","combatType":"마법 원거리","cooldown":5,"mp":15,"ultimate":false,"effect":"단일 대상 마법 피해 200% (마도총 제외)"},{"color":"파랑","level":20,"type":"passive","effect":"이동 속도 +20%","statTags":["이동 속도"]},{"color":"초록","level":20,"type":"active","skill":"자연의 손길","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":10,"mp":20,"ultimate":false,"effect":"지정 방향 파티원 또는 자신 회복 · 회복량 200"}]},{"monster":"다이어 울프","level":20,"boss":false,"region":"균열 1층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":20,"type":"active","skill":"그림자잡기","weaponGroup":"단검","cooldown":7,"mp":20,"ultimate":false,"effect":"대상 뒤로 이동해 300% 피해"},{"color":"파랑","level":20,"type":"passive","effect":"경험치 획득 +15%","statTags":["경험치 획득"]},{"color":"초록","level":20,"type":"passive","effect":"방어력 +15 · 최대 체력 +300","statTags":["방어력","최대 HP"]}]},{"monster":"고블린 킹","level":25,"boss":true,"region":"균열 1층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":25,"type":"active","skill":"애로우레인","weaponGroup":"활","cooldown":60,"mp":60,"ultimate":true,"effect":"지정 지점에 0.5초 간격 화살비 · 최대 10회, 타격당 60%"},{"color":"파랑","level":25,"type":"active","skill":"스팀팩","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":60,"mp":300,"ultimate":true,"effect":"최대 체력 10% 소모 · 공격력 +20%, 10초 지속"},{"color":"초록","level":25,"type":"active","skill":"저주받은 땅","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":60,"mp":300,"ultimate":true,"effect":"반경 6블록 몬스터가 받는 피해 +20%, 10초 지속"}]},{"monster":"오크","level":10,"boss":false,"region":"균열 2층","usableInSynthesisCalc":true,"cores":[{"color":"파랑","level":10,"type":"passive","effect":"골드 획득 +15%","statTags":["골드 획득"]},{"color":"빨강","level":20,"type":"active","skill":"파이어볼트","weaponGroup":"기타","combatType":"마법 원거리","cooldown":10,"mp":30,"ultimate":false,"effect":"범위 250% 마법 피해 · 최대 5마리 (마도총 제외)"},{"color":"초록","level":20,"type":"active","skill":"철괴","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":30,"mp":30,"ultimate":false,"effect":"받는 피해 -20%, 10초 지속"}]},{"monster":"오크 보어","level":20,"boss":false,"region":"균열 2층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":20,"type":"active","skill":"일섬","weaponGroup":"검","cooldown":8,"mp":20,"ultimate":false,"effect":"돌진해 최대 3명에게 250% 피해"},{"color":"파랑","level":20,"type":"active","skill":"집중","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":30,"mp":30,"ultimate":false,"effect":"치명타 확률 +10%, 10초 지속"},{"color":"초록","level":20,"type":"passive","effect":"회복률 +20%","statTags":["회복률"]}]},{"monster":"오크 전사","level":20,"boss":false,"region":"균열 2층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":20,"type":"active","skill":"일도양단","weaponGroup":"대검","cooldown":15,"ultimate":false,"effect":"단일 대상 400% 피해"},{"color":"파랑","level":20,"type":"passive","effect":"골드 획득 +10% · 이동 속도 +15%","statTags":["골드 획득","이동 속도"]},{"color":"초록","level":20,"type":"active","skill":"철괴","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":30,"mp":30,"ultimate":false,"effect":"받는 피해 -20%, 10초 지속"}]},{"monster":"모래골렘","level":30,"boss":false,"region":"균열 2층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":30,"type":"active","skill":"휠윈드","weaponGroup":"대검","cooldown":10,"mp":20,"ultimate":false,"effect":"0.4초 간격 4회, 1회당 50% 피해 · 반경 5블록, 최대 5명"},{"color":"파랑","level":30,"type":"active","skill":"용맹","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":30,"mp":30,"ultimate":false,"effect":"공격력 +10%, 10초 지속"},{"color":"초록","level":30,"type":"passive","effect":"최대 체력 +450 · 회복률 +15%","statTags":["최대 HP","회복률"]}]},{"monster":"벽돌골렘","level":30,"boss":false,"region":"균열 2층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":30,"type":"active","skill":"삼도참","weaponGroup":"검","cooldown":8,"mp":25,"ultimate":false,"effect":"단일 대상 3회 × 110% 피해"},{"color":"파랑","level":30,"type":"active","skill":"집중","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":30,"mp":30,"ultimate":false,"effect":"치명타 확률 +10%, 10초 지속"},{"color":"초록","level":30,"type":"passive","effect":"최대 체력 +450","statTags":["최대 HP"]}]},{"monster":"오크 거인","level":30,"boss":false,"region":"균열 2층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":30,"type":"active","skill":"섬광사연","weaponGroup":"단검","cooldown":10,"mp":25,"ultimate":false,"effect":"단일 대상 4회 × 130% 피해 (합계 520%)"},{"color":"파랑","level":30,"type":"active","skill":"용맹","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":30,"mp":30,"ultimate":false,"effect":"공격력 +10%, 10초 지속"},{"color":"초록","level":30,"type":"passive","effect":"방어력 +30 · 최대 체력 +500","statTags":["방어력","최대 HP"]}]},{"monster":"오크 궁수","level":30,"boss":false,"region":"균열 2층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":30,"type":"active","skill":"속사","weaponGroup":"활","cooldown":8,"mp":20,"ultimate":false,"effect":"0.2초 간격 3발, 1발당 82% 피해"},{"color":"파랑","level":30,"type":"passive","effect":"경험치 획득 +10% · 골드 획득 +10%","statTags":["경험치 획득","골드 획득"]},{"color":"초록","level":30,"type":"active","skill":"부채살","weaponGroup":"활","cooldown":15,"mp":30,"ultimate":false,"effect":"45도 부채꼴로 화살 3발 · 화살마다 대상 1명"}]},{"monster":"오크 라이더","level":30,"boss":false,"region":"균열 2층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":30,"type":"active","skill":"마력폭발","weaponGroup":"기타","combatType":"마법 원거리","cooldown":60,"mp":60,"ultimate":true,"effect":"마력 구체를 1초 모아 발사 · 700% 피해 (마도총 제외)"},{"color":"파랑","level":30,"type":"passive","effect":"경험치 획득 +20%","statTags":["경험치 획득"]},{"color":"초록","level":30,"type":"active","skill":"저주의 낙인","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":15,"mp":20,"ultimate":false,"effect":"충돌점 반경 2.5블록 적이 받는 피해 +15%, 8초 지속"}]},{"monster":"이끼골렘","level":30,"boss":false,"region":"균열 2층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":30,"type":"active","skill":"일도양단","weaponGroup":"대검","cooldown":15,"ultimate":false,"effect":"단일 대상 400% 피해"},{"color":"파랑","level":30,"type":"active","skill":"저주의 낙인","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":15,"mp":20,"ultimate":false,"effect":"충돌점 반경 2.5블록 적이 받는 피해 +15%, 8초 지속"},{"color":"초록","level":30,"type":"passive","effect":"최대 체력 +400","statTags":["최대 HP"]}]},{"monster":"오크 족장","level":40,"boss":true,"region":"균열 2층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":40,"type":"active","skill":"신벌","weaponGroup":"검","cooldown":60,"mp":300,"ultimate":true,"effect":"대검 직격 700% · 반경 8블록 충격파 300%"},{"color":"파랑","level":40,"type":"active","skill":"마력확장","weaponGroup":"기타","combatType":"마법 원거리","cooldown":60,"mp":300,"ultimate":true,"effect":"마법 공격력 +50%, 10초 · MP 소모 2배 (마도총 제외)"},{"color":"초록","level":40,"type":"active","skill":"성역전개","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":60,"mp":300,"ultimate":true,"effect":"범위 내 자신과 파티원에게 최대 체력의 30% 보호막, 10초 지속"}]},{"monster":"진흙 골렘","level":40,"boss":true,"region":"균열 2층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":40,"type":"active","skill":"죽음선고","weaponGroup":"단검","cooldown":60,"mp":60,"ultimate":true,"effect":"앞으로 순간이동 후 6연참, 타격당 157% (합계 943%) · 마지막 일격은 무조건 치명타"},{"color":"파랑","level":40,"type":"active","skill":"피바라기","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":60,"mp":300,"ultimate":true,"effect":"모든 공격에 생명력 흡수 10%, 10초 지속"},{"color":"초록","level":40,"type":"active","skill":"어스퀘이크","weaponGroup":"대검","cooldown":60,"mp":60,"ultimate":true,"effect":"도약 후 목표 지점 내리꽂기 · 반경 4블록 600% 피해"}]},{"monster":"스피더링","level":30,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":30,"type":"active","skill":"잔영보","weaponGroup":"단검","cooldown":7,"mp":15,"ultimate":false,"effect":"전방 질주하며 최대 8명에게 각각 300% 피해. 0.8초 안에 재사용하면 주변 4블록 회전 공격 (최대 250% + 출혈), 최대 8명. 공중에서는 발동 불가"},{"color":"파랑","level":30,"type":"passive","effect":"이동 속도 +12%","statTags":["이동 속도"]},{"color":"초록","level":30,"type":"passive","effect":"최대 체력 +350","statTags":["최대 HP"]}]},{"monster":"코볼트","level":30,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":30,"type":"active","skill":"퓨리어스 슬래시","weaponGroup":"검","cooldown":3,"mp":8,"ultimate":false,"effect":"검격 3연격 연계 (0.8초 안에 재시전) · 완주 또는 이탈 시 쿨타임 3초"},{"color":"파랑","level":30,"type":"passive","effect":"경험치 획득 +10%","statTags":["경험치 획득"]},{"color":"초록","level":30,"type":"passive","effect":"최대 체력 +350","statTags":["최대 HP"]}]},{"monster":"블랙 위도우","level":40,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":40,"type":"active","skill":"혜성 강타","weaponGroup":"기타","combatType":"물리 근접","cooldown":5,"mp":25,"ultimate":false,"effect":"혜성처럼 내리꽂아 전방 2연타 (각 170%)"},{"color":"파랑","level":40,"type":"passive","effect":"아이템 드랍률 +8%","statTags":["아이템 드랍률"]},{"color":"초록","level":40,"type":"passive","effect":"방어력 +26 · 최대 체력 +375","statTags":["방어력","최대 HP"]}]},{"monster":"스트랭글러 스파이더","level":40,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":40,"type":"passive","effect":"치명타 피해 +15%","statTags":["치명타 피해"]},{"color":"파랑","level":40,"type":"active","skill":"은형술","weaponGroup":"단검","cooldown":20,"mp":25,"ultimate":false,"effect":"8초간 은신 (대인전 4초 · 몬스터 어그로 차단) 및 8초간 이동 속도 증가. 대인전은 은신이 풀린 뒤 재사용 대기가 흐른다. 은신 중 공격하면 이동 속도 증가도 함께 종료. 스킬을 먼저 쓰면 첫 타격 확정 치명타 (첫 타에 소모). 기본 공격 또는 다른 스킬 발동 시 은형술과 은신 해제 (실패 제외). 대인전 기본 재사용 대기 40초"},{"color":"초록","level":40,"type":"passive","effect":"최대 체력 +500","statTags":["최대 HP"]}]},{"monster":"스피터 스파이더","level":40,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":40,"type":"active","skill":"비도술","weaponGroup":"단검","cooldown":6,"mp":15,"ultimate":false,"effect":"전방 3방향 (0° / ±15°)으로 단검 3발을 던져 적중한 대상에게 220% 피해"},{"color":"파랑","level":40,"type":"passive","effect":"이동 속도 +15%","statTags":["이동 속도"]},{"color":"초록","level":40,"type":"passive","effect":"최대 체력 +500","statTags":["최대 HP"]}]},{"monster":"장각 거미","level":40,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":40,"type":"active","skill":"발리스텝","weaponGroup":"활","cooldown":5,"mp":45,"ultimate":false,"effect":"전방 12블록에 관통 화살 일제 사격 (타격당 40%). 재사용 입력으로 뒤로 회피하며 한 번 더 사격"},{"color":"파랑","level":40,"type":"passive","effect":"이동 속도 +15%","statTags":["이동 속도"]},{"color":"초록","level":40,"type":"passive","effect":"회피 +5%","statTags":["회피"]}]},{"monster":"코볼트 광부","level":40,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":40,"type":"active","skill":"원소순환","weaponGroup":"기타","combatType":"마법 원거리","cooldown":8,"mp":20,"ultimate":false,"effect":"마법 원거리 (마도총 제외). 사용할 때마다 원소 순환 — 화염: 반경 4블록 130% 피해 + 화상 · 바람: 반경 4.5블록 90% 피해 + 넉백 · 치유: 자신과 주변 아군 최대 체력의 12% 회복"},{"color":"파랑","level":40,"type":"passive","effect":"골드 획득 +9% · 아이템 드랍률 +6%","statTags":["골드 획득","아이템 드랍률"]},{"color":"초록","level":40,"type":"passive","effect":"방어력 +35","statTags":["방어력"]}]},{"monster":"코볼트 궁수","level":40,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":40,"type":"active","skill":"애로우 템페스트","weaponGroup":"활","cooldown":60,"mp":350,"ultimate":true,"effect":"조준 지점에 4회 화살비 공격 (합계 약 785%) · 둔화"},{"color":"파랑","level":40,"type":"passive","effect":"경험치 획득 +12%","statTags":["경험치 획득"]},{"color":"초록","level":40,"type":"passive","effect":"방어력 +35","statTags":["방어력"]}]},{"monster":"코볼트 전사","level":40,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":40,"type":"passive","effect":"공격력 +25","statTags":["공격력"]},{"color":"파랑","level":40,"type":"passive","effect":"골드 획득 +12%","statTags":["골드 획득"]},{"color":"초록","level":40,"type":"active","skill":"광폭화","weaponGroup":"기타","combatType":"물리 근접","cooldown":20,"mp":25,"ultimate":false,"effect":"8초간 받는 피해 감소 및 이동 속도 증가"}]},{"monster":"코볼트 돌격병","level":50,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":50,"type":"active","skill":"퓨리어스 스트라이크","weaponGroup":"검","cooldown":60,"mp":400,"ultimate":true,"effect":"공중 3단 공격: 띄우기 → 회전 난무 → 내려찍기 (합계 약 1,290%)"},{"color":"파랑","level":50,"type":"active","skill":"맹진돌파","weaponGroup":"기타","combatType":"물리 근접","cooldown":6,"mp":10,"ultimate":false,"effect":"전방으로 돌진해 부딪힌 적에게 150% 피해 및 밀치기"},{"color":"초록","level":50,"type":"passive","effect":"최대 체력 +750","statTags":["최대 HP"]}]},{"monster":"코볼트 마법사","level":50,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":50,"type":"active","skill":"아케인 배리지","weaponGroup":"기타","combatType":"마법 원거리","cooldown":6,"mp":20,"ultimate":false,"effect":"마도총 제외. 아케인 5스택을 모두 소모해 추적 마법탄 3발 발사 (각 87%, 합계 약 260%). 5스택 미만이면 충전만 진행"},{"color":"파랑","level":50,"type":"active","skill":"아케인 혜성","weaponGroup":"완드","cooldown":8,"mp":50,"ultimate":false,"effect":"비전 혜성을 30초간 공전시킨다. 파이어체이서 적중 지점에 낙하시켜 반경 3블록에 450% 피해를 주고 소모"},{"color":"초록","level":50,"type":"passive","effect":"방어력 +50","statTags":["방어력"]}]},{"monster":"코볼트 창지기","level":50,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":50,"type":"active","skill":"성진 참격","weaponGroup":"기타","combatType":"물리 근접","cooldown":3,"mp":15,"ultimate":false,"effect":"창 3연격 연계 (각 100%) + 잔격 2회 (각 50%), 합계 300~350%. 0.8초 안에 재시전"},{"color":"파랑","level":50,"type":"passive","effect":"골드 획득 +15%","statTags":["골드 획득"]},{"color":"초록","level":50,"type":"active","skill":"리코일 스텝","weaponGroup":"마도총","cooldown":4.9,"mp":30,"ultimate":false,"effect":"라이플: 후퇴하며 전방 70도 사격, 최대 6명·총 250%. 스나이퍼: 후퇴 후 직선 관통탄, 최대 6명·총 375%. 벽 너머 대상은 적중하지 않음"}]},{"monster":"헌터 거미","level":50,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":50,"type":"active","skill":"컷스로트 콤보","weaponGroup":"단검","cooldown":60,"mp":425,"ultimate":true,"effect":"그림자 돌진 연계와 관통 대시 후 X자 난무 (합계 약 1,280%)"},{"color":"파랑","level":50,"type":"active","skill":"헌터스마크","weaponGroup":"활","cooldown":15,"mp":50,"ultimate":false,"effect":"8초간 활 공격으로 표식 중첩 (최대 3). 3중첩 대상 재적중 시 추가 200% 피해 및 둔화"},{"color":"초록","level":50,"type":"passive","effect":"최대 체력 +750","statTags":["최대 HP"]}]},{"monster":"포이즌 스파이더","level":56,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":56,"type":"active","skill":"크로스 탭","weaponGroup":"마도총","cooldown":2.95,"mp":35,"ultimate":false,"effect":"라이플: 직선탄 3연사, 최대 1명·총 540%. 스나이퍼: 정밀탄 1발, 최대 1명·총 810%. 시전 중 이동 속도 80%"},{"color":"파랑","level":56,"type":"active","skill":"맹독인","weaponGroup":"단검","cooldown":20,"mp":25,"ultimate":false,"effect":"10초간 일반 공격 적중 시 범위 내 최대 3명에게 출혈 (3회 × 20%) 부여"},{"color":"초록","level":56,"type":"active","skill":"블레이즈 러시","weaponGroup":"건틀릿","cooldown":4.8,"mp":35,"ultimate":false,"effect":"주변 6블록에 302.5% 피해를 2회 가해 총 605% 피해"}]},{"monster":"베놈 스파이더","level":59,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":59,"type":"active","skill":"영혼 수확","weaponGroup":"사이드","cooldown":60,"mp":450,"ultimate":true,"effect":"주변 7블록 범위에 720% 피해 · 가한 피해의 10% 흡혈"},{"color":"파랑","level":59,"type":"active","skill":"볼캐닉 버스트","weaponGroup":"건틀릿","cooldown":12,"mp":40,"ultimate":false,"effect":"주변 7블록에 412.5% 피해를 2회 가해 총 825% 피해"},{"color":"초록","level":59,"type":"passive","effect":"회피 +6%","statTags":["회피"]}]},{"monster":"섀도우 스파이더","level":60,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":60,"type":"active","skill":"슬라이스 앤다이스","weaponGroup":"단검","cooldown":3,"mp":8,"ultimate":false,"effect":"쌍단검 3연격 연계: 1타 150% · 2타 180% · 3타 230% (합계 560%). 각 타격에 열상(15%×4회). 0.8초 안에 재시전, 연계 종료/실패 시 3초 후 재사용"},{"color":"파랑","level":60,"type":"active","skill":"연막탄","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":15,"mp":35,"ultimate":false,"effect":"정면으로 연막을 터뜨린다 (피해 없음)"},{"color":"초록","level":60,"type":"active","skill":"브레이크 와이어","weaponGroup":"마도총","cooldown":5.9,"mp":45,"ultimate":false,"effect":"라이플: 전방 80도 2연타, 적을 최대 2칸 당기고 1.5초간 30% 둔화. 사거리 8칸, 최대 10명, 총 700%. 스나이퍼: 직선 관통탄 2연사, 첫 적중 시 0.8초 속박. 사거리 20칸, 최대 10명, 총 1,050%. 이동 제어 면역 및 벽 너머 대상에는 효과 없음"}]},{"monster":"아라크니아","level":60,"boss":true,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":60,"type":"active","skill":"사령견","weaponGroup":"기타","combatType":"마법 원거리","cooldown":60,"mp":300,"ultimate":true,"effect":"마법 원거리 (마도총 제외). 사령견을 일으켜 15초간 근처 적을 각각 220%로 강타. 사령각성 중 소환 시 피해 ×1.5 및 공격 속도 증가"},{"color":"파랑","level":60,"type":"passive","effect":"아이템 드랍률 +15% · 골드 획득 +12%","statTags":["골드 획득","아이템 드랍률"]},{"color":"초록","level":60,"type":"active","skill":"리빙 그라운드","weaponGroup":"사이드","cooldown":10,"mp":40,"ultimate":false,"effect":"전방 지면에 가시 소환: 최초 300% + 5초간 매초 150% 피해 · 둔화 · 가한 피해의 5% 흡혈"}]},{"monster":"플라잉 스파이더","level":60,"boss":false,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":60,"type":"active","skill":"사이클론 샷","weaponGroup":"활","cooldown":60,"mp":450,"ultimate":true,"effect":"회오리 화살로 적을 끌어모으며 15연타 (합계 약 1,150%)"},{"color":"파랑","level":60,"type":"active","skill":"팬텀 스텝","weaponGroup":"활","cooldown":6,"mp":10,"ultimate":false,"effect":"뒤로 도약해 거리를 벌리고, 직후 2초 안에 활 공격 6연사 (각 110%)"},{"color":"초록","level":60,"type":"passive","effect":"회피 +7%","statTags":["회피"]}]},{"monster":"브루드마더","level":70,"boss":true,"region":"균열 3층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":70,"type":"active","skill":"죽음의 표식","weaponGroup":"단검","cooldown":60,"mp":525,"ultimate":true,"effect":"20블록 내 단일 대상에게 표식을 새기고 처형. 1.6초 754% · 2.2초 806% · 2.8초 832% (합계 2,392%)"},{"color":"파랑","level":70,"type":"active","skill":"스크림","weaponGroup":"사이드","cooldown":10,"mp":50,"ultimate":false,"effect":"전방 라인 2연타 (각 100%, 합계 200%) · 방어력 15% 감소(6초) · 둔화 및 마지막 타격 넉백"},{"color":"초록","level":70,"type":"active","skill":"메테오 피스트","weaponGroup":"건틀릿","cooldown":60,"mp":350,"ultimate":true,"effect":"방향 충격파로 2,388.1% 피해 (대상별 1회 적중)"}]},{"monster":"마그마 스피릿","level":60,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":60,"type":"active","skill":"귀화난무","weaponGroup":"완드","cooldown":15,"mp":80,"ultimate":false,"effect":"주변 14블록 내 최대 3마리에게 각각 500% 피해. 사령각성 중 750% 피해"},{"color":"파랑","level":60,"type":"passive","effect":"드랍률 +12%","statTags":["아이템 드랍률"]},{"color":"초록","level":60,"type":"active","skill":"캐스케이드 볼트","weaponGroup":"완드","cooldown":5,"mp":80,"ultimate":false,"effect":"적에게 400% 피해 후 2명에게 280%, 다시 3명에게 180% 피해. 아군 적중 시 최대 체력 8% 회복, 주변 아군 2명은 4% 회복"}]},{"monster":"아이스 스피릿","level":60,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":60,"type":"active","skill":"프로스트노바","weaponGroup":"기타","combatType":"마법 원거리","cooldown":9,"mp":50,"ultimate":false,"effect":"전방에 폭발을 일으켜 320% 피해를 주고 둔화시킵니다."},{"color":"파랑","level":60,"type":"active","skill":"아케인 피어스","weaponGroup":"마도총","cooldown":"라이플 3.95 / 스나이퍼 5.6","mp":40,"ultimate":false,"effect":"라이플: 직선 관통탄 1발, 사거리 25칸·최대 3명·총 660%. 스나이퍼: 직선 관통탄 1발, 사거리 30칸·최대 3명·총 990%. 벽 너머 적은 맞히지 못합니다."},{"color":"초록","level":60,"type":"active","skill":"스피릿 볼트","weaponGroup":"완드","cooldown":7,"mp":50,"ultimate":false,"effect":"정령 투사체가 적 최대 2명에게 각각 430% 피해를 줍니다. 아군에게 사용하면 아군 1명의 최대 체력 5%를 회복합니다."}]},{"monster":"아이스 크랩","level":60,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":60,"type":"active","skill":"휠스톰","weaponGroup":"기타","combatType":"물리 근접","cooldown":10,"mp":50,"ultimate":false,"effect":"6초 대회전 중 - 주변 7블록 적을 끌어당기며 0.5초마다 150% 연속 타격 (시전 중 둔화). 근접 물리 무기 공용"},{"color":"파랑","level":60,"type":"passive","effect":"골드 획득 +18%","statTags":["골드 획득"]},{"color":"초록","level":60,"type":"active","skill":"수호철벽","weaponGroup":"기타","combatType":"물리 근접","ultimate":false,"effect":"6초간 회전 방패로 피해를 막고 주변 적을 밀쳐냄"}]},{"monster":"오로라 새","level":60,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":60,"type":"active","skill":"그림자 칼날","weaponGroup":"창","cooldown":60,"mp":45,"ultimate":true,"effect":"심연 개체가 전방 반경 7블록에 5회 공격합니다. 타격마다 210%, 총 1,050% 피해입니다."},{"color":"파랑","level":60,"type":"active","skill":"윈드워커","weaponGroup":"활","cooldown":6,"mp":40,"ultimate":false,"effect":"공중에서 사용하면 바람을 타고 한 번 더 도약합니다. 이후 3초간 활·마도총 공격의 치명타 피해 +20%."},{"color":"초록","level":60,"type":"passive","effect":"회복률 +25%","statTags":["회복률"]}]},{"monster":"용암 표류체","level":60,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":60,"type":"active","skill":"혼염","weaponGroup":"기타","combatType":"마법 원거리","cooldown":4,"mp":40,"ultimate":false,"effect":"전방으로 혼염을 2회 발사합니다. 타격마다 250%, 총 500% 피해와 화상을 줍니다."},{"color":"파랑","level":60,"type":"active","skill":"프리즘 가드","weaponGroup":"마도총","cooldown":"라이플 8.85 / 스나이퍼 12.6","mp":50,"ultimate":false,"effect":"라이플: 전방 70도 반격 사격 1회, 사거리 8칸·최대 6명·총 300%. 스나이퍼: 관통 반격 사격 1회, 사거리 20칸·최대 6명·총 450%. 1.2초간 바라보는 방향에서 받는 피해 -40%. 막기에 성공하면 반격탄을 발사합니다. 벽 너머 적은 맞히지 못합니다."},{"color":"초록","level":60,"type":"active","skill":"라이프바운드","weaponGroup":"완드","cooldown":15,"mp":100,"ultimate":false,"effect":"자신과 주변 8블록의 아군 회복률 +50%를 5초간 부여합니다."}]},{"monster":"염화 해골 보병","level":68,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":68,"type":"active","skill":"겁화륜","weaponGroup":"기타","combatType":"마법 원거리","cooldown":12,"mp":80,"ultimate":false,"effect":"영혼불 수레바퀴가 전방 2열을 굴러가며 각 100% 피해로 8회 공격합니다(총 800%). 사령각성 중에는 흡혈 광선으로 변형되어 180% 피해로 5회 공격하고 피해의 10%를 흡혈합니다."},{"color":"파랑","level":68,"type":"active","skill":"인페르노 러시","weaponGroup":"건틀릿","cooldown":12,"mp":45,"ultimate":false,"effect":"주변 7블록에 7회 공격합니다. 타격마다 137.5%, 총 962.5% 피해."},{"color":"초록","level":68,"type":"passive","effect":"최대 HP +1,000","statTags":["최대 HP"]}]},{"monster":"빙하 해골 보병","level":69,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":69,"type":"active","skill":"데스 휠","weaponGroup":"사이드","cooldown":8,"hp":100,"ultimate":false,"effect":"전방으로 돌진하며 회전 3연타를 가합니다. 주변 5블록의 최대 8명에게 타격마다 200%, 총 600% 피해를 줍니다."},{"color":"파랑","level":69,"type":"passive","effect":"경험치 획득 +18%","statTags":["경험치 획득"]},{"color":"초록","level":69,"type":"active","skill":"승룡격","weaponGroup":"건틀릿","ultimate":false,"effect":"상승 후 주변 7블록에 715% 피해"}]},{"monster":"빙하 해골 검사","level":70,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":70,"type":"active","skill":"리핑 슬래시","weaponGroup":"검","cooldown":60,"mp":500,"ultimate":true,"effect":"도약한 뒤 착지 충격파를 일으키는 궁극기. 총 약 2,421.5% 피해."},{"color":"파랑","level":70,"type":"passive","effect":"골드 획득 +20%","statTags":["골드 획득"]},{"color":"초록","level":70,"type":"passive","effect":"최대 체력 +1300","statTags":["최대 HP"]}]},{"monster":"빙하 해골 궁수","level":70,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":70,"type":"active","skill":"질풍인","weaponGroup":"활","cooldown":10,"mp":20,"ultimate":false,"effect":"6초간 활 기본 공격이 3발 속사로 바뀝니다. 각 화살은 150% 피해를 줍니다."},{"color":"파랑","level":70,"type":"passive","effect":"경험치 획득 +20%","statTags":["경험치 획득"]},{"color":"초록","level":70,"type":"passive","effect":"회피 +8%","statTags":["회피"]}]},{"monster":"빙하 해골 전사","level":70,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":70,"type":"active","skill":"성운 폭발","weaponGroup":"창","cooldown":60,"mp":30,"ultimate":true,"effect":"주변에 성운을 터뜨려 광역 공격을 가합니다. 총 약 2,400% 피해."},{"color":"파랑","level":70,"type":"passive","effect":"이동 속도 +20%","statTags":["이동 속도"]},{"color":"초록","level":70,"type":"passive","effect":"방어력 +6%","statTags":["방어력"]}]},{"monster":"빙하 해골 창병","level":70,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":70,"type":"active","skill":"다크 피어스","weaponGroup":"창","cooldown":8,"mp":30,"ultimate":false,"effect":"전방 10블록 경로의 최대 12명에게 350% 피해를 주고 끝 지점으로 순간이동합니다."},{"color":"빨강","level":70,"type":"active","skill":"다크 러쉬","weaponGroup":"창","cooldown":5,"mp":30,"ultimate":false,"effect":"심연 개체가 전방으로 돌진하며 경로의 적을 관통해 450% 피해를 줍니다."},{"color":"파랑","level":70,"type":"passive","effect":"드랍률 +15%","statTags":["아이템 드랍률"]},{"color":"초록","level":70,"type":"active","skill":"관통연사","weaponGroup":"마도총","cooldown":"라이플 1.5 / 스나이퍼 2.1","mp":18,"ultimate":false,"effect":"라이플은 같은 적에게 1·2·6연사 후 마무리탄까지 총 10타·1,200% 피해, 사거리 20칸·최대 3명. 스나이퍼는 1·1·3연사 후 마무리탄까지 총 6타·1,800% 피해, 사거리 25칸·최대 3명. 같은 대상에게 15초 안에 반복 입력하면 단계가 상승하며 4번째 입력으로 완성. 마지막 탄은 뒤쪽 적 최대 2명까지 관통하며 벽 너머 적은 맞히지 못함"}]},{"monster":"염화 해골 궁수","level":70,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":70,"type":"active","skill":"데드센터 피날레","weaponGroup":"마도총","cooldown":60,"mp":200,"ultimate":true,"effect":"라이플은 4연사 후 마무리탄 1발, 사거리 30칸·최대 1명·총 2,400% 피해. 스나이퍼는 정밀탄 후 마무리탄 1발, 사거리 35칸·최대 1명·총 3,600% 피해. 시전 중 이동 속도 60%"},{"color":"빨강","level":70,"type":"active","skill":"작열구","weaponGroup":"기타","combatType":"마법 원거리","cooldown":5,"mp":60,"ultimate":false,"effect":"단일 대상에게 420% 마법 피해와 작열을 입힙니다."},{"color":"파랑","level":70,"type":"passive","effect":"아이템 드랍률 +15%","statTags":["아이템 드랍률"]},{"color":"초록","level":70,"type":"active","skill":"데드센터 피날레","weaponGroup":"마도총","cooldown":60,"mp":200,"ultimate":true,"effect":"라이플: 대상 1명에게 4연사 후 마무리탄, 사거리 30칸·총 2,400%. 스나이퍼: 대상 1명에게 정밀탄 후 마무리탄, 사거리 35칸·총 3,600%. 시전 중 이동 속도 -60%, 벽 너머 적은 맞히지 못합니다."}]},{"monster":"염화 해골 전사","level":70,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":70,"type":"active","skill":"핀포인트 브레이커","weaponGroup":"마도총","cooldown":"라이플 4.9 / 스나이퍼 7","mp":60,"ultimate":false,"effect":"라이플: 정면 직선탄 2연사, 사거리 25칸·최대 1명·총 960%. 스나이퍼: 조준을 고정한 정밀탄 1발, 사거리 30칸·최대 1명·총 1,440%. 조준 중 이동 속도 -65%, 벽 너머 적은 맞히지 못합니다."},{"color":"파랑","level":70,"type":"active","skill":"어비스 퓨리","weaponGroup":"모든 무기","combatType":"전 무기","cooldown":20,"mp":50,"ultimate":false,"effect":"10초간 심연 각성합니다. 일반 공격에 심연 참격이 추가되어 최대 3명에게 적중합니다. 피해 감소 +15%와 흡혈 +5%를 얻습니다(창 장착 시)."},{"color":"초록","level":70,"type":"passive","effect":"최대 HP +5%","statTags":["최대 HP"]}]},{"monster":"염화 해골 창병","level":70,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":70,"type":"active","skill":"다크 러쉬","weaponGroup":"창","ultimate":false,"effect":"전방으로 돌진하며 경로의 적을 관통 (450%)"},{"color":"파랑","level":70,"type":"passive","effect":"이동 속도 +20%","statTags":["이동 속도"]},{"color":"초록","level":70,"type":"passive","effect":"회복률 +28%","statTags":["회복률"]}]},{"monster":"염화 해골 검사","level":71,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":71,"type":"active","skill":"그림자 참격","weaponGroup":"창","cooldown":3,"mp":8,"ultimate":false,"effect":"3연격 연계: 각 타격 90%, 3타째 심연 추가 베기 135%. 0.8초 안에 연계 입력, 완료하거나 입력이 끊기면 재사용 대기시간이 3초로 초기화됩니다."},{"color":"파랑","level":71,"type":"active","skill":"썬더 버스트","weaponGroup":"건틀릿","cooldown":8,"mp":50,"ultimate":false,"effect":"주변 6블록에 467.5% 피해를 2회 가해 총 935% 피해."},{"color":"초록","level":71,"type":"active","skill":"명사수의 신조","weaponGroup":"마도총","ultimate":false,"effect":"패시브: 라이플은 8칸 이상, 스나이퍼는 12칸 이상 떨어진 적에게 마도총 피해 +5%. 코어 장착 중 적용되며 스킬 슬롯을 차지하지 않습니다."}]},{"monster":"빙하 해골 마법사","level":80,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":80,"type":"active","skill":"아이스피어서","weaponGroup":"완드","cooldown":4,"mp":45,"ultimate":false,"effect":"얼음 관통창을 연달아 시전하면 140% / 140% / 280% 피해의 3연발로 이어집니다."},{"color":"파랑","level":80,"type":"passive","effect":"최대 마나 +220","statTags":["최대 MP"]},{"color":"초록","level":80,"type":"active","skill":"소생광","weaponGroup":"기타","combatType":"마법 원거리","cooldown":10,"mp":25,"ultimate":false,"effect":"최대 18블록 앞의 파티원 또는 지면에 치유의 빛을 쏩니다. 처음 맞은 파티원과 지형 주변 2블록 안의 파티원 및 자신을 각각 최대 HP의 15%만큼 1회 회복합니다(지능 보정 없음). 벽 너머에는 닿지 않습니다. 클레릭은 치유 대상에게 치유의 방벽(방어력 +30%, 3초)을 부여합니다."}]},{"monster":"빙하 해골 방패병","level":80,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":80,"type":"active","skill":"헬프레어","weaponGroup":"마도총","cooldown":"라이플 4.9 / 스나이퍼 7","mp":65,"ultimate":false,"effect":"라이플: 전방 60도 부채꼴 화염 사격 후 적중 대상에게 1초마다 화상 4회, 사거리 15칸·최대 8명·총 1,050%. 스나이퍼: 전방 60도 화염 사격 후 화상 4회, 사거리 20칸·최대 8명·총 1,575%. 벽 너머 적은 맞히지 못합니다."},{"color":"파랑","level":80,"type":"active","skill":"정화의 빛","weaponGroup":"완드","cooldown":8,"mp":50,"ultimate":false,"effect":"주변 10블록 아군의 모든 디버프를 해제하고 적에게 100% 피해와 밀쳐냄을 줍니다. 가까운 적일수록 밀쳐내는 힘이 강합니다."},{"color":"초록","level":80,"type":"active","skill":"정령치유","weaponGroup":"기타","combatType":"마법 원거리","cooldown":15,"mp":120,"ultimate":false,"effect":"자신의 최대 HP 60%를 즉시 회복합니다."}]},{"monster":"염화 해골 마법사","level":80,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":80,"type":"active","skill":"운석 낙하","weaponGroup":"완드","ultimate":false,"effect":"운석을 소환해 폭발시키는 궁극기"},{"color":"파랑","level":80,"type":"active","skill":"사령각성","weaponGroup":"완드","ultimate":false,"effect":"8초간 마력과 이동 속도가 증가하며 일부 스킬 효과가 강화됨"},{"color":"초록","level":80,"type":"passive","effect":"최대 체력 +1700","statTags":["최대 HP"]}]},{"monster":"염화 해골 방패병","level":80,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":80,"type":"active","skill":"트레이서 론도","weaponGroup":"마도총","cooldown":"라이플 5.9 / 스나이퍼 8.4","mp":70,"ultimate":false,"effect":"라이플: 전방 60도 부채꼴로 표식탄 2발, 사거리 20칸·최대 1명·총 1,440%. 스나이퍼: 표식 정밀탄 2발, 사거리 25칸·최대 1명·총 2,160%. 첫 적중 대상에게 6초 표식. 같은 모드의 다른 일반 공격이 직접 적중하면 추가탄 1회(라이플 450% / 스나이퍼 675%). 평타·지속 피해·반격·궁극기는 추가탄을 발동하지 않습니다. 벽 너머 적은 맞히지 못합니다."},{"color":"파랑","level":80,"type":"passive","effect":"드랍률 +18%","statTags":["아이템 드랍률"]},{"color":"초록","level":80,"type":"active","skill":"재생토템","weaponGroup":"완드","ultimate":false,"effect":"10초간 주변 아군을 1초마다 회복하는 장판"}]},{"monster":"영구동토 파수꾼","level":80,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":80,"type":"active","skill":"일렉트로 빔","weaponGroup":"완드","cooldown":20,"mp":200,"ultimate":false,"effect":"머리 위 뇌전구가 4초간 전방 14블록을 조준해 0.1초마다 20% 피해를 40회 줍니다(총 800%). 폭 2블록을 관통합니다."},{"color":"파랑","level":80,"type":"active","skill":"점멸","weaponGroup":"기타","combatType":"마법 원거리","cooldown":10,"mp":100,"ultimate":false,"effect":"바라보는 방향으로 순간이동합니다. 0.8초 안에 다시 누르면 지진이 발동해 반경 5블록에 400% 피해를 주고 띄웁니다."},{"color":"초록","level":80,"type":"passive","effect":"방어력 +100","statTags":["방어력"]}]},{"monster":"인페르노","level":80,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":80,"type":"active","skill":"휠 블레이드","weaponGroup":"사이드","cooldown":8,"mp":70,"ultimate":false,"effect":"제자리에서 회전하며 주변 5블록에 320% 피해를 2회 가해 총 640% 피해를 줍니다. 시전 중 2초간 발이 묶입니다."},{"color":"파랑","level":80,"type":"passive","effect":"골드 획득 +22%","statTags":["골드 획득"]},{"color":"초록","level":80,"type":"passive","effect":"방어력 +8%","statTags":["방어력"]}]},{"monster":"태양 예언자","level":80,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":80,"type":"active","skill":"에어로글레이브","weaponGroup":"활","cooldown":60,"mp":550,"ultimate":true,"effect":"비행 경로의 적에게 270%, 착지 지점의 적에게 216% 피해를 10회 적용하는 궁극기."},{"color":"파랑","level":80,"type":"active","skill":"암연막","weaponGroup":"단검","cooldown":8,"mp":45,"ultimate":false,"effect":"연막 폭발로 주변 8블록의 적에게 150% 피해를 주고, 연막 안의 적 이동 속도 -30%."},{"color":"초록","level":80,"type":"passive","effect":"회복률 +30%","statTags":["회복률"]}]},{"monster":"화염 수문장","level":80,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":80,"type":"active","skill":"철쇄구","weaponGroup":"기타","combatType":"물리 근접","cooldown":8,"mp":20,"ultimate":false,"effect":"정면 10블록 넓은 범위에서 가장 가까운 적 1명에게 150% 피해를 주고, 바로 앞의 적을 강하게 붙잡아 끌어옵니다."},{"color":"파랑","level":80,"type":"active","skill":"그래플링 훅","weaponGroup":"단검","cooldown":2,"mp":30,"ultimate":false,"effect":"갈고리 투사체가 적중하면 적에게 150% 피해를 주고 끌어옵니다. 지형에 적중하면 자신이 그 지점으로 이동합니다."},{"color":"초록","level":80,"type":"passive","effect":"CON +18","statTags":["CON"]}]},{"monster":"아이스 브루저","level":89,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":89,"type":"active","skill":"소울 클로","weaponGroup":"사이드","cooldown":8,"mp":60,"ultimate":false,"effect":"전방 18블록의 단일 적에게 발톱 투사체를 던져 600% 피해를 주고 둔화 및 끌어당김."},{"color":"파랑","level":89,"type":"active","skill":"골든 플래시","weaponGroup":"건틀릿","ultimate":false,"effect":"전방 돌진 후 주변 6블록에 880% 피해"},{"color":"초록","level":89,"type":"passive","effect":"최대 체력 +1700","statTags":["최대 HP"]}]},{"monster":"아이스 골렘","level":90,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":90,"type":"active","skill":"불릿 스톰","weaponGroup":"마도총","cooldown":"라이플 6.9 / 스나이퍼 9.8","mp":85,"ultimate":false,"effect":"라이플: 전방 60도 부채꼴로 탄막 8연사, 사거리 20칸·최대 8명·총 1,680%. 스나이퍼: 전방 60도 부채꼴로 굵은 탄막 4연사, 사거리 25칸·최대 8명·총 2,520%. 벽 너머 적은 맞히지 못합니다."},{"color":"파랑","level":90,"type":"active","skill":"빙벽","weaponGroup":"완드","cooldown":25,"mp":50,"ultimate":false,"effect":"전방에 거대한 빙벽을 소환해 적의 진로를 막습니다."},{"color":"초록","level":90,"type":"passive","effect":"방어력 +120","statTags":["방어력"]}]},{"monster":"아이스 엘리멘탈","level":90,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":90,"type":"active","skill":"필살투창","weaponGroup":"활/석궁","cooldown":6,"mp":50,"ultimate":false,"effect":"정면 단일 적에게 550% 피해와 둔화·넉백을 줍니다."},{"color":"파랑","level":90,"type":"active","skill":"트레이스 링크","weaponGroup":"마도총","cooldown":"라이플 5.9 / 스나이퍼 8.4","mp":55,"ultimate":false,"effect":"표식을 남기는 직선 2연사. 라이플 450% / 스나이퍼 675%. 6초 안에 다른 일반 공격으로 표적을 맞히면 추가 1회 타격"},{"color":"초록","level":90,"type":"active","skill":"생명의 광선","weaponGroup":"완드","cooldown":6,"mp":55,"ultimate":false,"effect":"전방 20블록 관통 광선으로 경로의 적에게 100% 피해를 주고, 자신과 경로의 아군을 최대 HP의 15%만큼 회복합니다(지능 보정 없음)."}]},{"monster":"태양 술사","level":90,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":90,"type":"active","skill":"홀리레이","weaponGroup":"기타","combatType":"마법 원거리","cooldown":2,"mp":12,"ultimate":false,"effect":"정면 빛 투사체가 착탄 지점 반경 2.5블록에 140% 피해를 줍니다. 재생토템 직후에는 태양광 폭격(각 250%) 다단히트 폭격으로 변형됩니다."},{"color":"파랑","level":90,"type":"passive","effect":"골드 획득 +24%","statTags":["골드 획득"]},{"color":"초록","level":90,"type":"active","skill":"생명직조","weaponGroup":"완드","cooldown":60,"mp":450,"ultimate":true,"effect":"생명직조의 은총: 대치유 성역을 펼치고 치유 구슬을 흩뿌려 아군을 대량 회복하는 궁극기."}]},{"monster":"태양 전사","level":90,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":90,"type":"active","skill":"슬라이드 버스트","weaponGroup":"마도총","cooldown":"라이플 5.9 / 스나이퍼 8.4","mp":60,"ultimate":false,"effect":"라이플: 최대 4블록 전진한 뒤 전방 90도 부채꼴 4연사, 사거리 10칸·최대 12명·총 825%. 스나이퍼: 제자리에서 5방향 관통탄을 4회 발사, 사거리 20칸·최대 12명·총 1,237.5%. 시전 중 이동 속도 -70%. 여러 탄이 겹쳐도 같은 적은 사격 차례마다 1회만 맞으며, 벽 너머 적은 맞히지 못합니다."},{"color":"파랑","level":90,"type":"passive","effect":"이동 속도 +22%","statTags":["이동 속도"]},{"color":"초록","level":90,"type":"active","skill":"워리어 레이지","weaponGroup":"검","cooldown":15,"mp":15,"ultimate":false,"effect":"현재 HP의 30%를 소모해 8초간 넉백 저항 100%, 이동 속도 +30%, 방어구 관통 +10%를 얻습니다. 피해는 주지 않습니다."}]},{"monster":"파이어 엘리멘탈","level":90,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":90,"type":"active","skill":"파이어체이서","weaponGroup":"완드","cooldown":8,"mp":40,"ultimate":false,"effect":"유도 화염구가 대상을 추적해 명중 지점 반경 3블록에 500% 피해를 줍니다. 아케인 혜성 공전 중에는 해당 지점에 혜성이 낙하합니다."},{"color":"파랑","level":90,"type":"passive","effect":"드랍률 +20%","statTags":["아이템 드랍률"]},{"color":"초록","level":90,"type":"active","skill":"환생","weaponGroup":"기타","combatType":"마법 원거리","ultimate":false,"effect":"패시브(장착 불가): HP가 1 이하가 되는 치명타를 받으면 자동 발동해 즉시 3초간 무적 상태가 되고 HP 30%를 회복합니다. 쿨타임 4시간. 보유 중 상시 적용, 재사용 없음."}]},{"monster":"마그마헷지호그","level":95,"boss":true,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":95,"type":"active","skill":"드래곤피어싱","weaponGroup":"활/석궁","cooldown":60,"mp":600,"ultimate":true,"effect":"잠시 조준한 뒤 거대 관통 화살을 발사합니다. 적중한 각 대상에게 2,175% 피해와 6초간 매초 145% 화상 피해(총 870%)를 줍니다."},{"color":"파랑","level":95,"type":"active","skill":"메테오","weaponGroup":"기타","combatType":"마법 원거리","cooldown":60,"mp":1000,"ultimate":true,"effect":"조준 지점 반경 6블록에 운석을 떨어뜨려 2,970% 피해와 장시간 화상을 줍니다."},{"color":"초록","level":95,"type":"passive","effect":"방어력 +10% · CON +20","statTags":["방어력"]}]},{"monster":"얼음기사","level":95,"boss":true,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":95,"type":"active","skill":"심판","weaponGroup":"대검","cooldown":60,"mp":300,"ultimate":true,"effect":"3초 후 심판검이 떨어져 전방 반경 4.5블록에 200% 광역 피해와 2초 둔화를 줍니다. 이후 4초간 0.5초마다 50% 잔류 피해를 주어 총 400%를 추가합니다."},{"color":"파랑","level":95,"type":"active","skill":"스피어 일루전","weaponGroup":"창","cooldown":15,"mp":60,"ultimate":false,"effect":"자신 주변 반경 7블록에 분신 난무. 범위 안 최대 12명에게 3연타, 타격마다 300%·총 900% 피해와 넉백."},{"color":"초록","level":95,"type":"active","skill":"라이트닝 러시","weaponGroup":"건틀릿","cooldown":60,"mp":450,"ultimate":true,"effect":"주변 9블록의 적에게 143% 피해를 21회 가해 총 3,003% 피해."}]},{"monster":"얼음여왕","level":95,"boss":true,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":95,"type":"active","skill":"초신성","weaponGroup":"창","cooldown":10,"mp":90,"ultimate":false,"effect":"초신성 폭발로 광역 다단 공격 후 대폭발. 총 약 800% 피해."},{"color":"파랑","level":95,"type":"active","skill":"심연 대재앙","weaponGroup":"창","cooldown":60,"mp":500,"ultimate":true,"effect":"심연 군주를 강림시킵니다. 창을 지면에 꽂아 반경 10블록에 2,970% 피해를 줍니다."},{"color":"초록","level":95,"type":"passive","effect":"최대 HP +8% · 회복률 +35%","statTags":["최대 HP","회복률"]}]},{"monster":"예티","level":97,"boss":false,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":97,"type":"active","skill":"서든 사이드","weaponGroup":"사이드","cooldown":9,"mp":90,"ultimate":false,"effect":"신속 은신 버프 후 자기중심 반경 4블록에 550% 광역 피해."},{"color":"파랑","level":97,"type":"active","skill":"트리니티 블로우","weaponGroup":"건틀릿","cooldown":7.2,"mp":65,"ultimate":false,"effect":"주변 6블록에 1,045% 피해를 정확히 1회 가합니다."},{"color":"초록","level":97,"type":"passive","effect":"최대 체력 +2200","statTags":["최대 HP"]}]},{"monster":"글라시온","level":100,"boss":true,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":100,"type":"active","skill":"다크 인피니티","weaponGroup":"창","ultimate":false,"effect":"주변 반경 8블록에 9연타 (각 333.5%, 합계 3001.5%)"},{"color":"파랑","level":100,"type":"active","skill":"무영난무","weaponGroup":"단검","ultimate":false,"effect":"주변 12블록의 최대 6대상을 순환 공격. 타격당 750% 및 출혈"},{"color":"초록","level":100,"type":"active","skill":"크로스헤븐","weaponGroup":"마도총","cooldown":60,"mp":260,"ultimate":true,"effect":"라이플은 탄약 최대 6발, 전방 100도 부채꼴로 5회 연속 사격 후 마무리탄, 사거리 20칸·최대 16명·총 2,940%. 스나이퍼는 5방향 관통탄 5회 후 마무리탄, 사거리 25칸·최대 16명·총 4,410%. 시전 중 이동 속도 50% 감소. 여러 탄이 겹쳐도 같은 적은 각 사격 차례에 1회만 적중하며 벽 너머 적은 맞히지 못함"}]},{"monster":"나누크","level":100,"boss":true,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":100,"type":"active","skill":"죽음의 신","weaponGroup":"사이드","cooldown":60,"mp":300,"ultimate":true,"effect":"궁극기: 10초간 사신으로 변신해 피해량 +30%. 평타가 전방 반경 7블록의 거대 사신 베기로 바뀝니다. 0.5초 간격으로 1타 500% / 2타 600% / 3타 800%를 순환하며, 2타는 띄우고 3타는 넉백시킵니다. 변신 중 다른 낫 스킬(데스 휠·소울 클로·서든 사이드·영혼수확)은 사용할 수 없습니다."},{"color":"파랑","level":100,"type":"passive","effect":"드랍률 +25% · 이동 속도 +12%","statTags":["이동 속도","아이템 드랍률"]},{"color":"초록","level":100,"type":"active","skill":"선령강림","weaponGroup":"기타","combatType":"마법 원거리","cooldown":60,"mp":800,"ultimate":true,"effect":"궁극기: 최대 HP의 50% 보호막을 10초간 얻고, 반경 6블록에 984% 피해를 3회 줍니다."}]},{"monster":"바락","level":100,"boss":true,"region":"균열 4층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":100,"type":"active","skill":"헬블레이드","weaponGroup":"검","cooldown":60,"mp":650,"ultimate":true,"effect":"궁극기: 지옥검으로 울음 균열을 일으켜 전방을 7연타합니다. 총 2,997% 피해."},{"color":"파랑","level":100,"type":"active","skill":"인페르노체인","weaponGroup":"기타","combatType":"마법 원거리","cooldown":60,"mp":800,"ultimate":true,"effect":"조준 지면 지점(최대 16칸)에 화염 사슬 4개를 떨어뜨립니다. 각 사슬이 747.5% 피해를 주고 강한 둔화를 겁니다. 사용 무기: 마법 원거리(마도총 제외)."},{"color":"초록","level":100,"type":"passive","effect":"최대 HP +10% · 회복률 +38%","statTags":["최대 HP","회복률"]}]},{"monster":"도그울","level":90,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":90,"type":"active","skill":"수류의 호흡","weaponGroup":"대검","ultimate":false,"effect":"패시브: 이동 속도가 증가하며 수류 연계 동작을 보조함 · 보유 중 상시 적용"},{"color":"파랑","level":90,"type":"passive","effect":"공격력 +80","statTags":["공격력"]},{"color":"초록","level":90,"type":"active","skill":"용염의 심장","weaponGroup":"대검","ultimate":false,"effect":"패시브: 공격 기술 적중 시 용염을 남겨 기술별 추가 화염 피해를 줌 · 보유 중 상시 적용"}]},{"monster":"소울 파이어","level":90,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":90,"type":"active","skill":"대지맥 공명","weaponGroup":"완드","ultimate":false,"effect":"1초마다 주변에 지맥 고리를 생성. 멈춰 있을 때 안쪽 고리 적에게 100% 피해, 이동 중에는 바깥쪽 고리 적에게 200% 피해를 3회 (초당 최대 600%, 보유 중 상시 적용)"},{"color":"파랑","level":90,"type":"passive","effect":"마력 +80","statTags":["마력"]},{"color":"초록","level":90,"type":"active","skill":"영량의 계약","weaponGroup":"완드","ultimate":false,"effect":"패시브: 늑대 영혼을 유지합니다. 기본 공격이 타격마다 300% 피해를 주며, 소환수 피해 증가 효과가 적용됩니다. 보유 중 상시 적용, 재사용 없음."}]},{"monster":"유령","level":92,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":92,"type":"active","skill":"뇌신보","weaponGroup":"검","ultimate":false,"effect":"패시브: 22% 확률로 다음 피해 1회를 무효화할 준비 상태가 됩니다. 회피 성공 시 2초간 신속 III 획득. 보유 중 상시 적용."},{"color":"파랑","level":92,"type":"passive","effect":"방어력 +140","statTags":["방어력"]},{"color":"초록","level":92,"type":"active","skill":"염혼","weaponGroup":"검","ultimate":false,"effect":"패시브: 화염 저항 획득. 화염 기술 적중 시 15% 확률로 대상을 불태워 4초간 매초 해당 타격 피해의 약 20~33% 화상 피해. 화염 효과와 작열승천의 마무리 타격은 화상 확정 발동 · 보유 중 상시 적용"}]},{"monster":"비명자","level":93,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":93,"type":"active","skill":"만병숙련","weaponGroup":"단검","ultimate":false,"effect":"달리는 동안 이동 속도 II 획득 · 점프력 +20% · 보유 중 상시 적용"},{"color":"파랑","level":93,"type":"passive","effect":"최대 체력 +3,200","statTags":["최대 HP"]},{"color":"초록","level":93,"type":"active","skill":"화조의 혈통","weaponGroup":"활","ultimate":false,"effect":"패시브: 화염 저항을 얻습니다. 화염 기술 적중 시 3초간 화상, 1초마다 피해를 줍니다. 총 화상 피해는 해당 기술 표기 피해의 약 30%이며 기술·각성 여부에 따라 달라집니다. 보유 중 상시 적용."}]},{"monster":"부패한 배회자","level":94,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":94,"type":"active","skill":"풍문각인","weaponGroup":"창","ultimate":false,"effect":"패시브: 창 장착 시 점프 공격을 강화합니다. 보유 중 상시 적용."},{"color":"파랑","level":94,"type":"passive","effect":"방어구 관통 +20","statTags":["방어 관통"]},{"color":"초록","level":94,"type":"active","skill":"용아연참","weaponGroup":"대검","cooldown":5,"mp":50,"ultimate":false,"effect":"5단 연계: 107% / 107% / 53% / 100% / 233% 피해. 모두 적중 시 총 600% 피해."}]},{"monster":"망령","level":95,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":95,"type":"active","skill":"만병연쇄","weaponGroup":"단검","cooldown":5,"mp":50,"ultimate":false,"effect":"단검 235% → 차크람 235% → 화살 176% → 창 354%의 4단 무기 연계. 전부 적중 시 총 1,000% 피해."},{"color":"파랑","level":95,"type":"active","skill":"사형선고","weaponGroup":"마도총","cooldown":"라이플 6.9 / 스나이퍼 9.8","mp":80,"ultimate":false,"effect":"라이플: 전방 60도 안의 적을 지정하고 1.6초 뒤 지정한 적에게 일제 사격 1회 (사거리 25칸, 최대 5명, 총 1,440%). 스나이퍼: 전방 60도 안의 적을 지정하고 1.6초 뒤 일제 사격 1회 (사거리 30칸, 최대 5명, 총 2,160%). 벽 너머 대상에게는 적중하지 않음"},{"color":"초록","level":95,"type":"active","skill":"귀화호박탄","weaponGroup":"사이드","cooldown":6,"mp":60,"ultimate":false,"effect":"귀화 폭탄 1~3개를 던집니다. 폭탄 하나당 약 267% 피해, 모두 적중하면 최대 800% 피해."}]},{"monster":"부패한 토사자","level":96,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":96,"type":"active","skill":"지암연탄","weaponGroup":"완드","cooldown":5,"mp":100,"ultimate":false,"effect":"암괴를 던져 700% 피해. 네 번째 시전마다 강화되어 주변 적에게 1,050% 피해를 주고 밀쳐냄 (20초간 시전이 없으면 누적 초기화)"},{"color":"파랑","level":96,"type":"passive","effect":"STR +20","statTags":["STR"]},{"color":"초록","level":96,"type":"active","skill":"작열연참","weaponGroup":"검","cooldown":5,"mp":50,"ultimate":false,"effect":"175% 피해로 4회 베어 총 700% 피해. 작열 대상에게는 각 타격 약 236%, 총 약 945% 피해"}]},{"monster":"구울","level":98,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":98,"type":"active","skill":"수류연참","weaponGroup":"대검","cooldown":5,"mp":50,"ultimate":false,"effect":"4단 베기: 221% / 221% / 184% / 184% 피해, 모두 적중 시 총 810% 피해."},{"color":"파랑","level":98,"type":"active","skill":"미드나이트 슬래시","weaponGroup":"사이드","cooldown":6,"mp":40,"ultimate":false,"effect":"주변 5블록을 두 번 베어 타격마다 400%, 총 800% 피해"},{"color":"초록","level":98,"type":"active","skill":"영혼쇄도","weaponGroup":"완드","cooldown":5,"mp":100,"ultimate":false,"effect":"영혼 참격 4회: 162% / 162% / 162% / 189% 피해, 모두 적중 시 총 675% 피해."}]},{"monster":"몰락한 병사","level":98,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":98,"type":"active","skill":"뇌명연참","weaponGroup":"검","cooldown":5,"mp":50,"ultimate":false,"effect":"약 242% 피해로 3회 베어 총 725% 피해. 마지막 타격은 20% 확률로 적을 기절시킴"},{"color":"파랑","level":98,"type":"passive","effect":"DEX +20","statTags":["DEX"]},{"color":"초록","level":98,"type":"active","skill":"작열비익","weaponGroup":"활","cooldown":5,"mp":50,"ultimate":false,"effect":"화염 깃털이 400% 피해를 줍니다. 3중첩 시 추가 폭발 400%, 최대 총 800% 피해."}]},{"monster":"몰락한 파수병","level":101,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":101,"type":"active","skill":"지맥도약","weaponGroup":"완드","cooldown":6,"mp":120,"ultimate":false,"effect":"전방으로 도약하며 지맥 기둥 3개가 순서대로 133% / 267% / 400% 피해를 줍니다. 한 대상은 첫 기둥만 맞아 최대 400%; 서로 다른 적 3명을 맞히면 합계 800% 피해."},{"color":"파랑","level":101,"type":"passive","effect":"INT +20","statTags":["INT"]},{"color":"초록","level":101,"type":"active","skill":"질풍연격","weaponGroup":"창","cooldown":5,"mp":50,"ultimate":false,"effect":"258% / 258% / 334% 피해의 3연격(총 850%). 세 번째 타격은 지면에 있을 때만 적중합니다. 낙법 보호 중에는 돌진 타격 258%로 바뀌고 낙법 보호 1회를 소모합니다."}]},{"monster":"슬렌더","level":102,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":102,"type":"active","skill":"잿물무보","weaponGroup":"활","cooldown":6,"mp":60,"ultimate":false,"effect":"이동하며 150% 피해를 6회 줍니다. 모두 적중 시 총 900% 피해."},{"color":"파랑","level":102,"type":"passive","effect":"공격력 +90","statTags":["공격력"]},{"color":"초록","level":102,"type":"active","skill":"풍창도약","weaponGroup":"창","cooldown":6,"mp":60,"ultimate":false,"effect":"앞으로 도약하며 낙법 보호 3중첩을 얻습니다. 직접 피해는 없습니다. 보호 중 질풍연격이 돌진 타격으로 바뀌며, 3회 사용 후 중첩이 사라집니다."}]},{"monster":"몰락한 전령","level":104,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":104,"type":"active","skill":"뇌섬일격","weaponGroup":"검","cooldown":7,"mp":70,"ultimate":false,"effect":"직선으로 빠르게 돌진해 경로의 적에게 825% 피해를 1회 줍니다."},{"color":"파랑","level":104,"type":"active","skill":"오버히트","weaponGroup":"마도총","cooldown":"라이플 9.8 / 스나이퍼 14","mp":60,"ultimate":false,"effect":"10초 동안 다음 일반 공격 2회 강화. 주 대상 직접 피격 피해 상한: 라이플 900% / 스나이퍼 1,350%. 평타·지속 피해·반격·궁극기·트레이스 링크 추가탄에는 적용되지 않음"},{"color":"초록","level":104,"type":"passive","effect":"회피 +9%","statTags":["회피"]}]},{"monster":"리치던전 검병","level":105,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":105,"type":"active","skill":"혼검륜","weaponGroup":"완드","cooldown":9,"mp":180,"ultimate":false,"effect":"회전 고리가 약 106% 피해를 7회 준 뒤 마지막으로 약 108% 피해를 줍니다. 합계 약 850% 피해."},{"color":"파랑","level":105,"type":"active","skill":"소울 크레센트","weaponGroup":"사이드","cooldown":8,"mp":50,"ultimate":false,"effect":"주변 6블록을 450% 피해로 2회 베어 총 900% 피해."},{"color":"초록","level":105,"type":"active","skill":"수룡차","weaponGroup":"대검","cooldown":9,"mp":90,"ultimate":false,"effect":"회전 베기로 183% 피해를 6회 줍니다(화면 표기 총 800%)."}]},{"monster":"부패한 광폭자","level":106,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":106,"type":"active","skill":"용아쇄진","weaponGroup":"대검","cooldown":9,"mp":90,"ultimate":false,"effect":"111% 피해의 연속 찌르기 4회 후 331% 마무리 타격, 총 775% 피해."},{"color":"파랑","level":106,"type":"passive","effect":"방어력 +165","statTags":["방어력"]},{"color":"초록","level":106,"type":"active","skill":"유령유영","weaponGroup":"사이드","cooldown":7,"mp":70,"ultimate":false,"effect":"유령처럼 전방 약 7블록을 활공합니다. 착지 후 3초간 이동 속도 +20%, 피해량 +20%."}]},{"monster":"리치던전 창병","level":108,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":108,"type":"active","skill":"대지격참","weaponGroup":"완드","cooldown":9,"mp":180,"ultimate":false,"effect":"대지를 두드려 292% 피해를 준 뒤 압착하여 583% 피해. 모두 적중 시 총 875% 피해이며, 압착 타격에 맞은 대상은 3초간 기절"},{"color":"파랑","level":108,"type":"passive","effect":"방어구 관통 +25","statTags":["방어 관통"]},{"color":"초록","level":108,"type":"active","skill":"무념화","weaponGroup":"검","cooldown":9,"mp":90,"ultimate":false,"effect":"전방을 베어 850% 피해. 작열 대상에게는 약 1,148% 피해"}]},{"monster":"몰락한 기사","level":108,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":108,"type":"active","skill":"용린나선","weaponGroup":"대검","cooldown":9,"mp":90,"ultimate":false,"effect":"150% 시작 타격, 75% 난타 5회, 150% 교차 공격 2회로 총 825% 피해"},{"color":"파랑","level":108,"type":"passive","effect":"최대 MP +400","statTags":["최대 MP"]},{"color":"초록","level":108,"type":"active","skill":"작열승천","weaponGroup":"검","cooldown":9,"mp":90,"ultimate":false,"effect":"전방 지면을 휩쓸어 주변 3블록·최대 6명에게 875% 피해를 주고 띄웁니다. 작열 대상에게는 1,050% 피해와 화상을 줍니다."}]},{"monster":"몰락한 사신","level":110,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":110,"type":"active","skill":"영혼지휘","weaponGroup":"완드","cooldown":10,"mp":100,"ultimate":false,"effect":"소환수 태세를 자유 → 대기 → 집중 순서로 바꿉니다. 집중 태세에서 영혼쇄도·혼검·혼령투창에 적중한 적을 소환수가 공격합니다. 직접 피해는 없습니다."},{"color":"파랑","level":110,"type":"passive","effect":"피해량 +12%","statTags":["피해량"]},{"color":"초록","level":110,"type":"passive","effect":"치명타 피해 +18%","statTags":["치명타 피해"]}]},{"monster":"언데드왕 철퇴병","level":110,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":110,"type":"active","skill":"유수검무","weaponGroup":"대검","cooldown":10,"mp":100,"ultimate":false,"effect":"흐르듯 이동하며 175% 피해로 5회 베어 총 875% 피해"},{"color":"파랑","level":110,"type":"passive","effect":"INT +25","statTags":["INT"]},{"color":"초록","level":110,"type":"passive","effect":"CON +30","statTags":["CON"]}]},{"monster":"몰락한 학살자","level":112,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":112,"type":"active","skill":"윤월선풍","weaponGroup":"단검","cooldown":10,"mp":100,"ultimate":false,"effect":"6초간 0.3초마다 주변에 150% 피해를 줍니다. 종료 시 차크람 2개를 던져 각각 150% 피해를 줍니다."},{"color":"파랑","level":112,"type":"passive","effect":"방어력 +190","statTags":["방어력"]},{"color":"초록","level":112,"type":"passive","effect":"마력 +100","statTags":["마력"]}]},{"monster":"묘지기","level":112,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":112,"type":"active","skill":"염폭집속","weaponGroup":"활","cooldown":10,"mp":100,"ultimate":false,"effect":"정밀 사격 10회(각 115%) 후 폭발 화살 3회(각 229%). 모두 적중 시 최대 약 1,375% 피해."},{"color":"파랑","level":112,"type":"active","skill":"블라썸 베러지","weaponGroup":"마도총","cooldown":"라이플 7.85 / 스나이퍼 11.2","mp":100,"ultimate":false,"effect":"라이플: 조준 지점 반경 5칸을 5차례 폭격 (사거리 25칸, 최대 10명, 총 1,900%). 스나이퍼: 같은 범위에 5차례 폭격 (사거리 30칸, 최대 10명, 총 2,850%). 벽 너머 대상에게는 적중하지 않음"},{"color":"초록","level":112,"type":"passive","effect":"방어력 +12%","statTags":["방어력"]}]},{"monster":"언데드왕 도끼병","level":112,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":112,"type":"active","skill":"뇌광반전","weaponGroup":"검","cooldown":10,"mp":100,"ultimate":false,"effect":"반격 섬광이 475% 피해로 2회 적중. 모두 적중 시 총 950% 피해"},{"color":"파랑","level":112,"type":"passive","effect":"최대 체력 +12%","statTags":["최대 HP"]},{"color":"초록","level":112,"type":"passive","effect":"공격력 +8%","statTags":["공격력"]}]},{"monster":"언데드왕 석궁병","level":114,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":114,"type":"active","skill":"천룡관창","weaponGroup":"대검","cooldown":11,"mp":110,"ultimate":false,"effect":"공중으로 솟구치며 범위 안의 적에게 925% 피해를 주는 단일 강타"},{"color":"파랑","level":114,"type":"passive","effect":"방어구 관통 +30","statTags":["방어 관통"]},{"color":"초록","level":114,"type":"passive","effect":"최대 체력 +4,400","statTags":["최대 HP"]}]},{"monster":"리치던전 궁병","level":115,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":115,"type":"active","skill":"풍영검무","weaponGroup":"창","cooldown":10,"mp":100,"ultimate":false,"effect":"333% / 333% / 334% 피해로 세 차례 베어 총 1,000% 피해"},{"color":"파랑","level":115,"type":"active","skill":"루나 배러지","weaponGroup":"마도총","cooldown":"라이플 6.9 / 스나이퍼 9.8","mp":95,"ultimate":false,"effect":"라이플: 조준 지점 반경 5칸을 4차례 폭격 (사거리 25칸, 최대 10명, 총 1,750%). 스나이퍼: 같은 범위를 4차례 폭격 (사거리 30칸, 최대 10명, 총 2,625%). 벽 너머 대상에게는 적중하지 않음"},{"color":"초록","level":115,"type":"active","skill":"연환쌍격","weaponGroup":"건틀릿","cooldown":6.4,"mp":70,"ultimate":false,"effect":"600% 연격 2회 (총 1,200%). 충전권 직후에는 두 타격 대신 반경 5블록의 1,400% 낙하섬격으로 변경"}]},{"monster":"펌킹","level":115,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":115,"type":"active","skill":"혼령투창","weaponGroup":"완드","cooldown":11,"mp":220,"ultimate":false,"effect":"전방에 영혼창을 발사해 범위 안의 적에게 1,000% 피해를 주고 짧게 경직시킴"},{"color":"파랑","level":115,"type":"passive","effect":"마력 +120","statTags":["마력"]},{"color":"초록","level":115,"type":"passive","effect":"공격력 +120","statTags":["공격력"]}]},{"monster":"흡혈늑대","level":115,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":115,"type":"active","skill":"천뢰강하","weaponGroup":"검","cooldown":11,"mp":110,"ultimate":false,"effect":"낙뢰와 함께 내리꽂아 범위 안의 적에게 1,000% 피해를 한 번 줌"},{"color":"파랑","level":115,"type":"passive","effect":"DEX +30","statTags":["DEX"]},{"color":"초록","level":115,"type":"active","skill":"대지진파","weaponGroup":"완드","cooldown":11,"mp":220,"ultimate":false,"effect":"전방으로 지진파를 방출해 경로의 적에게 1,000% 피해"}]},{"monster":"곤봉 아보미네이션","level":116,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":116,"type":"active","skill":"정밀포화","weaponGroup":"단검","cooldown":11,"mp":110,"ultimate":false,"effect":"정밀 사격 10회(각 115%) 후 폭발 화살 3회(각 229%). 모두 적중 시 최대 약 1,375% 피해."},{"color":"파랑","level":116,"type":"passive","effect":"INT +30","statTags":["INT"]},{"color":"초록","level":116,"type":"passive","effect":"CON +35","statTags":["CON"]}]},{"monster":"발톱 아보미네이션","level":117,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":117,"type":"active","skill":"용왕포효","weaponGroup":"대검","cooldown":13,"mp":140,"ultimate":false,"effect":"143% 포효 타격 5회 후 285% 마무리 타격. 전부 적중 시 총 1,000% 피해"},{"color":"파랑","level":117,"type":"passive","effect":"최대 마나 +600","statTags":["최대 MP"]},{"color":"초록","level":117,"type":"passive","effect":"방어 관통 +35","statTags":["방어 관통"]}]},{"monster":"카돈","level":117,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":117,"type":"active","skill":"암극분출","weaponGroup":"완드","cooldown":13,"mp":280,"ultimate":false,"effect":"117% 들어올리기 3회와 233% 분출 타격 3회로 공격. 전부 적중 시 총 1,050% 피해"},{"color":"파랑","level":117,"type":"passive","effect":"최대 체력 +5,300","statTags":["최대 HP"]},{"color":"초록","level":117,"type":"passive","effect":"방어력 +230","statTags":["방어력"]}]},{"monster":"몰락한 수호자","level":118,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":118,"type":"active","skill":"운해관통","weaponGroup":"창","cooldown":11,"mp":110,"ultimate":false,"effect":"440% 관통 일격 후 110% 피해의 회오리가 최대 6회 적중. 전부 적중 시 총 1,100% 피해"},{"color":"파랑","level":118,"type":"active","skill":"충천권","weaponGroup":"건틀릿","cooldown":8,"mp":85,"ultimate":false,"effect":"전방 최대 8명에게 1,300% 피해를 주고 일반 적을 띄웁니다. 2초 내 후속 입력 시 낙하 타격 1,400% 피해."},{"color":"초록","level":118,"type":"active","skill":"레버넌트 러시","weaponGroup":"사이드","cooldown":10,"mp":75,"ultimate":false,"effect":"전방으로 돌진한 뒤 주변 6블록에 1,100% 피해를 줍니다."}]},{"monster":"몰락한 파괴자","level":118,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":118,"type":"active","skill":"천뢰난무","weaponGroup":"검","cooldown":13,"mp":140,"ultimate":false,"effect":"번개를 약 58% 피해로 18회 떨어뜨려 총 약 1,050% 피해."},{"color":"파랑","level":118,"type":"passive","effect":"피해량 +12%","statTags":["피해량"]},{"color":"초록","level":118,"type":"passive","effect":"치명타 피해 +18%","statTags":["치명타 피해"]}]},{"monster":"치자","level":118,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":118,"type":"active","skill":"홍련만개","weaponGroup":"검","cooldown":13,"mp":140,"ultimate":false,"effect":"약 269% 피해로 4회 공격해 총 1,075% 피해. 작열 대상에게는 타격마다 피해 +35%."},{"color":"파랑","level":118,"type":"passive","effect":"최대 마나 +650","statTags":["최대 MP"]},{"color":"초록","level":118,"type":"passive","effect":"방어구 관통 +38","statTags":["방어 관통"]}]},{"monster":"밴시","level":119,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":119,"type":"active","skill":"격랑참","weaponGroup":"대검","cooldown":11,"mp":110,"ultimate":false,"effect":"파도 연속타 4회와 상승·하강 베기 3회가 각각 약 132% 피해. 모두 적중 시 총 925% 피해"},{"color":"파랑","level":119,"type":"active","skill":"질풍각","weaponGroup":"건틀릿","cooldown":7.2,"mp":75,"ultimate":false,"effect":"전방으로 돌진해 최대 8명에게 1,250% 피해를 줍니다. 일반 몬스터만 밀쳐냅니다."},{"color":"초록","level":119,"type":"passive","effect":"최대 마나 +500","statTags":["최대 MP"]}]},{"monster":"리치 노클로드","level":120,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":120,"type":"active","skill":"절멸포화","weaponGroup":"단검","cooldown":14,"mp":150,"ultimate":false,"effect":"최대 12초간 자유롭게 이동하며 기본 공격으로 관통·폭발 탄환을 발사. 탄환 1발당 160%, 최대 20발. 쿨타임 14초는 사용 즉시 시작"},{"color":"파랑","level":120,"type":"passive","effect":"최대 체력 +5,600","statTags":["최대 HP"]},{"color":"초록","level":120,"type":"passive","effect":"방어력 +240","statTags":["방어력"]}]},{"monster":"바엘","level":120,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":120,"type":"active","skill":"작열성계","weaponGroup":"검","cooldown":14,"mp":150,"ultimate":false,"effect":"작열 범위를 폭발시켜 1,150% 피해를 줍니다. 작열 대상에게는 1,380% 피해."},{"color":"파랑","level":120,"type":"passive","effect":"보스 피해 +20%","statTags":["보스 피해"]},{"color":"초록","level":120,"type":"passive","effect":"치명타 확률 +5%","statTags":["치명타 확률"]}]},{"monster":"탈론","level":120,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":120,"type":"active","skill":"혼령군세","weaponGroup":"완드","cooldown":14,"mp":300,"ultimate":false,"effect":"20초간 도끼병 또는 석궁병을 소환합니다(동시 최대 4명). 도끼병 기본 공격 350%, 회전 공격 250%로 최대 5회 타격. 석궁병 화살은 350% 피해. 소환수 피해 증가 효과가 적용됩니다."},{"color":"파랑","level":120,"type":"passive","effect":"쿨타임 감소 +5%","statTags":["쿨타임 감소"]},{"color":"초록","level":120,"type":"passive","effect":"방어구 관통 +40","statTags":["방어 관통"]}]},{"monster":"몰락한 수호녀","level":121,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":121,"type":"active","skill":"한밤의 흑익","weaponGroup":"사이드","cooldown":11,"mp":110,"ultimate":false,"effect":"각 타격 약 137% 피해. 모두 적중 시 대상을 3초간 실명시킴"},{"color":"파랑","level":121,"type":"passive","effect":"최대 체력 +5,000","statTags":["최대 HP"]},{"color":"초록","level":121,"type":"passive","effect":"방어력 +215","statTags":["방어력"]}]},{"monster":"언데드왕 티베리우스","level":124,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":124,"type":"active","skill":"폭풍쇄류","weaponGroup":"창","cooldown":15,"mp":160,"ultimate":false,"effect":"폭풍의 격류를 한 번 방출해 범위 안의 적에게 1,250% 피해"},{"color":"파랑","level":124,"type":"passive","effect":"최대 마나 +700","statTags":["최대 MP"]},{"color":"초록","level":124,"type":"passive","effect":"방어구 관통 +5%","statTags":["방어 관통"]}]},{"monster":"아보미네이션","level":125,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":125,"type":"active","skill":"불사조의 성역","weaponGroup":"활","cooldown":15,"mp":160,"ultimate":false,"effect":"불사조 토템이 228% 피해로 4회 공격한 뒤 388% 폭발. 전부 적중 시 총 1,300% 피해"},{"color":"파랑","level":125,"type":"passive","effect":"최대 체력 +12%","statTags":["최대 HP"]},{"color":"초록","level":125,"type":"passive","effect":"공격력 +8%","statTags":["공격력"]}]},{"monster":"퀸드리스","level":125,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":125,"type":"active","skill":"진룡멸세","weaponGroup":"대검","cooldown":60,"mp":500,"ultimate":true,"effect":"연속 참격 8회, 관통 찌르기 10회, 돌진 및 경로 폭발 12회로 이어지는 궁극기입니다. 전부 적중 시 총 4,000% 피해입니다."},{"color":"파랑","level":125,"type":"passive","effect":"DEX +40","statTags":["DEX"]},{"color":"초록","level":125,"type":"passive","effect":"STR +40","statTags":["STR"]}]},{"monster":"크라간","level":125,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":125,"type":"active","skill":"만류귀해","weaponGroup":"대검","cooldown":60,"mp":500,"ultimate":true,"effect":"약 190% 피해의 연속 참격을 총 21회 가합니다. 전부 적중 시 총 4,000% 피해입니다."},{"color":"파랑","level":125,"type":"passive","effect":"CON +45","statTags":["CON"]},{"color":"초록","level":125,"type":"active","skill":"영룡현신","weaponGroup":"완드","cooldown":60,"mp":1000,"ultimate":true,"effect":"25초간 용의 정령을 소환합니다. 화염구와 브레스는 적중할 때마다 각각 350% 피해를 주며 소환수 피해 증가 효과가 적용됩니다."}]},{"monster":"본 드래곤","level":127,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":127,"type":"active","skill":"화우난사","weaponGroup":"활","cooldown":14,"mp":150,"ultimate":false,"effect":"150% 중심 폭발 1회와 150% 화염탄 7발을 발사. 모든 탄이 대상에 적중하면 총 1,200% 피해"},{"color":"파랑","level":127,"type":"passive","effect":"DEX +35","statTags":["DEX"]},{"color":"초록","level":127,"type":"active","skill":"오연혼월","weaponGroup":"사이드","cooldown":15,"mp":105,"ultimate":false,"effect":"다섯 방향 혼월이 같은 대상에는 1회만 적중해 1,175% 피해"}]},{"monster":"웬디고","level":127,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":127,"type":"active","skill":"저주인형","weaponGroup":"사이드","cooldown":14,"mp":150,"ultimate":false,"effect":"허수아비가 약 168% 피해를 7회 줍니다. 총 약 1,175% 피해."},{"color":"파랑","level":127,"type":"passive","effect":"INT +35","statTags":["INT"]},{"color":"초록","level":127,"type":"passive","effect":"CON +40","statTags":["CON"]}]},{"monster":"백랑","level":128,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":128,"type":"active","skill":"대지종언","weaponGroup":"완드","cooldown":60,"mp":1100,"ultimate":true,"effect":"첫 충격파로 1,326.5% 피해를 주고 대지를 붕괴시켜 2,651.1% 피해를 줍니다. 총 3,977.5% 피해이며, 붕괴 타격에 맞은 대상을 3초간 기절시킵니다."},{"color":"파랑","level":128,"type":"passive","effect":"회복률 +42%","statTags":["회복률"]},{"color":"초록","level":128,"type":"passive","effect":"방어력 +12%","statTags":["방어력"]}]},{"monster":"타나토스","level":128,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":128,"type":"active","skill":"불사조강림","weaponGroup":"활","cooldown":60,"mp":600,"ultimate":true,"effect":"주변 800% 피해 후 10초간 불사조로 각성합니다. 각성 중 화염 깃털과 잿더미 이동 기술이 강화됩니다."},{"color":"파랑","level":128,"type":"active","skill":"백렬권","weaponGroup":"건틀릿","cooldown":60,"mp":385,"ultimate":true,"effect":"전방 7블록의 최대 10명에게 352% 피해를 14회 준 뒤 1,012% 마무리 타격(총 5,940%). 약 3.25초간 시전하며 시전 중 기본 공격·다른 스킬을 사용할 수 없습니다."},{"color":"초록","level":128,"type":"passive","effect":"마력 +140","statTags":["마력"]}]},{"monster":"흑랑","level":128,"boss":false,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":128,"type":"active","skill":"홍련호왕","weaponGroup":"검","cooldown":60,"mp":550,"ultimate":true,"effect":"궁극기: 직격 1,428% 후 종결 타격 2,142%(총 3,570%). 작열 대상에게는 각각 약 1,927.8% / 2,956.3% 피해."},{"color":"파랑","level":128,"type":"passive","effect":"이동 속도 +25%","statTags":["이동 속도"]},{"color":"초록","level":128,"type":"active","skill":"회피","weaponGroup":"건틀릿","ultimate":false,"effect":"보유형 패시브: 건틀릿 장착 중 최종 회피율 +10% × 코어 잠재 (최종 상한 75%) · 보유 중 상시 적용"}]},{"monster":"듀라한","level":129,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":129,"type":"active","skill":"심해와류","weaponGroup":"대검","cooldown":14,"mp":150,"ultimate":false,"effect":"흡입 파도는 타격마다 약 54% 피해로 최대 11회, 마무리 파도는 약 269% 피해로 최대 2회 적중합니다. 전부 적중 시 총 약 1,132% 피해."},{"color":"파랑","level":129,"type":"active","skill":"천근추","weaponGroup":"건틀릿","cooldown":12,"mp":105,"ultimate":false,"effect":"반경 6블록·최대 8명에게 1,500% 피해를 줍니다. 일반 몬스터는 2초간 둔화."},{"color":"초록","level":129,"type":"passive","effect":"공격력 +130","statTags":["공격력"]}]},{"monster":"뱀파이어 드래곤","level":130,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":130,"type":"active","skill":"만병천화","weaponGroup":"단검","cooldown":60,"mp":600,"ultimate":true,"effect":"무기 연격 약 316.4% 피해 16회 후 949.1% 마무리 타격. 모두 적중 시 총 약 6,012.5% 피해."},{"color":"파랑","level":130,"type":"passive","effect":"방어구 관통 +45","statTags":["방어 관통"]},{"color":"초록","level":130,"type":"active","skill":"아케인 터렛","weaponGroup":"마도총","cooldown":60,"mp":550,"ultimate":true,"effect":"라이플: 사격 분신 4기가 조준 지점 반경 10블록에 탄막 8회, 사거리 25칸·최대 12명·총 4,500%. 스나이퍼: 사거리 30칸·최대 12명·총 6,750%. 분신이 동시에 공격하지만 분신 수만큼 피해가 중첩되지는 않습니다. 벽 너머 적은 맞히지 못합니다."}]},{"monster":"세라이","level":130,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":130,"type":"active","skill":"풍신천역","weaponGroup":"활","cooldown":60,"mp":600,"ultimate":true,"effect":"회전 격류로 2,232.5% 피해를 주고 마지막 참격으로 2,232.5% 피해를 줍니다. 총 4,465% 피해입니다."},{"color":"파랑","level":130,"type":"passive","effect":"치명타 확률 +7%","statTags":["치명타 확률"]},{"color":"초록","level":130,"type":"passive","effect":"쿨타임 감소 +7%","statTags":["쿨타임 감소"]}]},{"monster":"뱀파이어 로드","level":135,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":135,"type":"active","skill":"염리심강림","weaponGroup":"검","cooldown":60,"mp":550,"ultimate":true,"effect":"10초간 염리신으로 각성해 기존 번개 검술을 강화 형태로 바꿉니다. 자체 직접 피해 없음"},{"color":"파랑","level":135,"type":"active","skill":"주홍 처형","weaponGroup":"마도총","cooldown":60,"mp":400,"ultimate":true,"effect":"라이플: 조준 지면 반경 10칸에 연속 사격 8회와 강타 4회, 적중 대상 지속 피해 4회. 사거리 25칸·최대 12명·총 4,960%. 스나이퍼: 같은 공격, 사거리 30칸·최대 12명·총 3,440%. 벽 너머의 적에게는 적중하지 않음"},{"color":"초록","level":135,"type":"active","skill":"그레이브 그래비티","weaponGroup":"사이드","cooldown":60,"mp":420,"ultimate":true,"effect":"주변 10블록에 opening+21타, 총 4,320% 피해. 일반 몬스터만 흡인"}]},{"monster":"카로","level":135,"boss":true,"region":"균열 5층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":135,"type":"active","skill":"영겁악몽","weaponGroup":"사이드","cooldown":60,"mp":600,"ultimate":true,"effect":"악몽 파동이 456% 피해로 10회 적중. 최대 총 4,560% 피해, 대상을 3초간 암전 및 감속"},{"color":"파랑","level":135,"type":"passive","effect":"방어구 관통 +7%","statTags":["방어 관통"]},{"color":"초록","level":135,"type":"passive","effect":"보스 피해 +30%","statTags":["보스 피해"]}]},{"monster":"암반룡 테라보어 Ⅰ/Ⅱ","level":125,"boss":false,"region":"균열 6층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":125,"type":"active","skill":"맹격연타","weaponGroup":"검","cooldown":11,"mp":40,"ultimate":false,"effect":"5연계 전부 적중 시 총 1950% 피해"},{"color":"빨강","level":125,"type":"active","skill":"절명연격","weaponGroup":"단검","cooldown":11,"mp":40,"ultimate":false,"effect":"4연계와 만병의 칼날 종결을 포함해 총 1725% 피해"},{"color":"파랑","level":125,"type":"active","skill":"치솟는 주먹","weaponGroup":"건틀릿","cooldown":4,"mp":50,"ultimate":false,"effect":"치솟는 주먹으로 850% 피해"},{"color":"파랑","level":125,"type":"active","skill":"강하난사","weaponGroup":"마도총","cooldown":"라이플 7.85초 · 스나이퍼 11.2","mp":105,"ultimate":false,"effect":"라이플: 조준한 적 위치(없으면 조준 방향의 지점)에 반경 4칸 폭격 4회. 적중 대상에 1초마다 화상 4회. 사거리 25칸, 최대 10명, 총 2100%. 스나이퍼: 조준한 적 위치(없으면 조준 방향의 지점)에 반경 4칸 폭격 4회. 적중 대상에 1초마다 화상 4회. 사거리 30칸, 최대 10명, 총 3150%. 벽 너머의 적에게는 적중하지 않습니다."},{"color":"초록","level":125,"type":"active","skill":"암석 투척","weaponGroup":"대검","cooldown":10,"mp":80,"ultimate":false,"effect":"지면 공격 전부 적중 시 총 1325% 피해"},{"color":"초록","level":125,"type":"passive","effect":"방어력 +280","statTags":["방어력"]}]},{"monster":"천공룡 스카이위스퍼 Ⅰ/Ⅱ","level":130,"boss":false,"region":"균열 6층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":130,"type":"active","skill":"회피사격","weaponGroup":"활","cooldown":7,"mp":50,"ultimate":false,"effect":"3발 전부 적중 시 총 925% 피해"},{"color":"빨강","level":130,"type":"active","skill":"화염연타","weaponGroup":"완드","cooldown":11,"mp":40,"ultimate":false,"effect":"4연격 직격 피해와 화상을 포함해 총 1625% 피해"},{"color":"파랑","level":130,"type":"active","skill":"홍련회창","weaponGroup":"창","cooldown":10,"mp":80,"ultimate":false,"effect":"돌진과 창격으로 총 1350% 피해"},{"color":"파랑","level":130,"type":"passive","effect":"경험치 획득 +25%","statTags":["경험치 획득"]},{"color":"초록","level":130,"type":"active","skill":"블러드문 슬래시","weaponGroup":"사이드","cooldown":7,"mp":45,"ultimate":false,"effect":"참격 전부 적중 시 총 950% 피해"},{"color":"초록","level":130,"type":"active","skill":"심홍호","weaponGroup":"단검","cooldown":11,"mp":100,"ultimate":false,"effect":"대표 2타와 만병의 칼날 종결 기준 총 1625% 피해"}]},{"monster":"작열룡 플레어윙 Ⅰ/Ⅱ","level":135,"boss":false,"region":"균열 6층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":135,"type":"active","skill":"광전사 도약","weaponGroup":"검","cooldown":8,"mp":60,"ultimate":false,"effect":"도약과 착지 전부 적중 시 총 1125% 피해"},{"color":"빨강","level":135,"type":"active","skill":"화살비","weaponGroup":"활","cooldown":10,"mp":90,"ultimate":false,"effect":"화살비 전부 적중 시 총 1375% 피해"},{"color":"파랑","level":135,"type":"active","skill":"화산창","weaponGroup":"완드","cooldown":9,"mp":80,"ultimate":false,"effect":"2단계 연계와 화상을 포함해 총 2525% 피해"},{"color":"파랑","level":135,"type":"active","skill":"강철 의지","weaponGroup":"건틀릿","cooldown":24,"mp":120,"ultimate":false,"effect":"6초 동안 받는 피해 50% 감소 (재사용 대기시간 24초)"},{"color":"초록","level":135,"type":"active","skill":"팬텀 체인","weaponGroup":"사이드","cooldown":12,"mp":90,"ultimate":false,"effect":"비행 참격과 종결타 전부 적중 시 총 1675% 피해"},{"color":"초록","level":135,"type":"passive","effect":"마력 +160","statTags":["마력"]}]},{"monster":"고룡 드라코 Ⅰ/Ⅱ","level":140,"boss":false,"region":"균열 6층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":140,"type":"active","skill":"참격돌진","weaponGroup":"단검","cooldown":7,"mp":50,"ultimate":false,"effect":"돌진 피해와 만병의 칼날 종결을 포함해 총 1125% 피해"},{"color":"빨강","level":140,"type":"active","skill":"옛 월광","weaponGroup":"대검","cooldown":8,"mp":60,"ultimate":false,"effect":"월광 참격 전부 적중 시 총 1200% 피해"},{"color":"파랑","level":140,"type":"active","skill":"스컬 스플리터","weaponGroup":"건틀릿","cooldown":8,"mp":90,"ultimate":false,"effect":"두개골을 분쇄해 1,850% 피해를 주고 기절시킵니다."},{"color":"파랑","level":140,"type":"passive","effect":"방어력 +14%","statTags":["방어력"]},{"color":"초록","level":140,"type":"active","skill":"청명회창","weaponGroup":"창","cooldown":10,"mp":90,"ultimate":false,"effect":"총 1450% 피해"},{"color":"초록","level":140,"type":"passive","effect":"공격력 +160","statTags":["공격력"]}]},{"monster":"빙결룡 유키오 Ⅰ/Ⅱ","level":145,"boss":true,"region":"균열 6층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":145,"type":"active","skill":"무자비한 회오리","weaponGroup":"검","cooldown":10,"mp":90,"ultimate":false,"effect":"약 1.5초 동안 회전하며 전진해 주변 적을 5회 벤 뒤, 뒤로 물러나다가 전방을 2회 찌른다. 타격당 약 214%, 전부 적중 시 총 1496% 피해. 시전 중에도 다른 스킬을 쓸 수 있으며, 그러면 남은 전진·후퇴·찌르기는 생략된다"},{"color":"빨강","level":145,"type":"active","skill":"파멸의 일격","weaponGroup":"활","cooldown":60,"mp":400,"ultimate":true,"effect":"대상당 1회, 총 5440% 피해"},{"color":"파랑","level":145,"type":"active","skill":"트리니티 게일","weaponGroup":"창","cooldown":10,"mp":100,"ultimate":false,"effect":"대상당 1회, 삼방향 투창으로 1500% 피해"},{"color":"파랑","level":145,"type":"active","skill":"우박관통","weaponGroup":"완드","cooldown":11,"mp":100,"ultimate":false,"effect":"빙결 지대 3곳 중첩 기준 총 1650% 피해"},{"color":"초록","level":145,"type":"active","skill":"수정영혼참","weaponGroup":"대검","cooldown":10,"mp":80,"ultimate":false,"effect":"삼중 창격 전부 적중 시 총 1550% 피해"},{"color":"초록","level":145,"type":"active","skill":"트리플 크레센트","weaponGroup":"사이드","cooldown":18,"mp":120,"ultimate":false,"effect":"삼방향 참격 전부 적중 시 총 2725% 피해"}]},{"monster":"천뢰룡 셀레스티얼 썬더로드 Ⅰ/Ⅱ","level":145,"boss":true,"region":"균열 6층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":145,"type":"active","skill":"흉악한 일격","weaponGroup":"검","cooldown":11,"mp":100,"ultimate":false,"effect":"0.6초 동안 제자리에서 힘을 모은 뒤(그동안 이동 불가) 전방 14칸을 가르는 일격으로 경로의 적에게 1675% 피해. 일격 직후 바로 다른 스킬로 연계할 수 있다"},{"color":"빨강","level":145,"type":"active","skill":"천공관통","weaponGroup":"활","cooldown":11,"mp":100,"ultimate":false,"effect":"대상당 1회, 총 1625% 피해"},{"color":"파랑","level":145,"type":"active","skill":"지옥염 폭발","weaponGroup":"완드","cooldown":12,"mp":110,"ultimate":false,"effect":"강선과 화상 전부 적중 시 총 1800% 피해"},{"color":"파랑","level":145,"type":"passive","effect":"드랍률 +30%","statTags":["아이템 드랍률"]},{"color":"초록","level":145,"type":"active","skill":"제이드 피어스","weaponGroup":"창","cooldown":10,"mp":100,"ultimate":false,"effect":"대상당 1회, 집중 창격으로 1550% 피해"},{"color":"초록","level":145,"type":"passive","effect":"방어구 관통 +8%","statTags":["방어 관통"]}]},{"monster":"삼색 수호룡 카미나리 Ⅰ/Ⅱ","level":150,"boss":true,"region":"균열 6층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":150,"type":"active","skill":"사화","weaponGroup":"단검","cooldown":10,"mp":90,"ultimate":false,"effect":"연속 참격과 만병의 칼날 종결을 포함해 총 1725% 피해"},{"color":"빨강","level":150,"type":"active","skill":"용의 번개","weaponGroup":"대검","cooldown":60,"mp":450,"ultimate":true,"effect":"낙뢰 전부 적중 시 총 5920% 피해"},{"color":"파랑","level":150,"type":"active","skill":"스포트라이트 슬램","weaponGroup":"건틀릿","cooldown":60,"mp":450,"ultimate":true,"effect":"집중 강타로 6380.8% 피해"},{"color":"파랑","level":150,"type":"passive","effect":"골드 획득 +30%","statTags":["골드 획득"]},{"color":"초록","level":150,"type":"active","skill":"데스 블룸","weaponGroup":"사이드","cooldown":60,"mp":480,"ultimate":true,"effect":"십방향 참격 전부 적중 시 총 5800% 피해"},{"color":"초록","level":150,"type":"passive","effect":"보스 피해 +35%","statTags":["보스 피해"]}]},{"monster":"보안드론A","level":140,"boss":false,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":140,"type":"active","skill":"쾌속 연사","weaponGroup":"활","cooldown":9,"mp":70,"ultimate":false,"effect":"화살 5발과 관통 화살 3발, 총 약 1,300% 피해"},{"color":"파랑","level":140,"type":"active","skill":"스캐터 블래스트","weaponGroup":"마도총","cooldown":7,"mp":105,"ultimate":false,"effect":"라이플 2,100% / 저격총 3,150% 피해"},{"color":"초록","level":140,"type":"passive","effect":"최대 체력 +8,000","statTags":["최대 HP"]}]},{"monster":"드로이드 검병","level":143,"boss":false,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":143,"type":"active","skill":"쇄도참","weaponGroup":"검","cooldown":12,"mp":100,"ultimate":false,"effect":"두 번 베어 720% + 1,080% 피해"},{"color":"파랑","level":143,"type":"passive","effect":"MP +900","statTags":["최대 MP"]},{"color":"초록","level":143,"type":"active","skill":"드래곤 랜스","weaponGroup":"창","cooldown":10,"mp":80,"ultimate":false,"effect":"주변 6칸을 훑어 790% 피해를 2회 줌 (대상당 총 1,580%, 최대 12명)"}]},{"monster":"사이보그 쥐 검병","level":146,"boss":false,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":146,"type":"active","skill":"흡혈교차","weaponGroup":"단검","cooldown":14,"mp":130,"ultimate":false,"effect":"590% + 1,760% 피해"},{"color":"파랑","level":146,"type":"passive","effect":"공격력 +180","statTags":["공격력"]},{"color":"초록","level":146,"type":"active","skill":"자운원무","weaponGroup":"사이드","cooldown":8,"mp":65,"ultimate":false,"effect":"610% 피해를 2회, 총 1,220% 피해"}]},{"monster":"드로이드 포병","level":148,"boss":false,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":148,"type":"passive","effect":"마력 +180","statTags":["마력"]},{"color":"파랑","level":148,"type":"active","skill":"화염폭풍 난사","weaponGroup":"완드","cooldown":11,"mp":95,"ultimate":false,"effect":"1.5초 후 최대 10개 대상에 유도 화염구, 총 1,700% 피해"},{"color":"초록","level":148,"type":"active","skill":"심연의 손","weaponGroup":"대검","cooldown":12,"mp":90,"ultimate":false,"effect":"전방 지면을 내려쳐 반경 10칸의 적에게 1,425% 피해를 주고 중심으로 끌어당김 (최대 12명)"}]},{"monster":"보안드론B","level":150,"boss":false,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":150,"type":"active","skill":"폭발 화살","weaponGroup":"활","cooldown":6,"mp":50,"ultimate":false,"effect":"대상에게 925%, 주변 최대 8명에게 460% 피해"},{"color":"파랑","level":150,"type":"passive","effect":"경험치 획득 +25%","statTags":["경험치 획득"]},{"color":"초록","level":150,"type":"active","skill":"반동추진","weaponGroup":"건틀릿","cooldown":10,"mp":85,"ultimate":false,"effect":"돌진과 재입력 도약으로 각각 1,025% 피해"}]},{"monster":"사이보그 쥐 총병","level":154,"boss":false,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":154,"type":"active","skill":"펜타 버스트","weaponGroup":"마도총","cooldown":"라이플 7 / 저격총 10","mp":115,"ultimate":false,"effect":"라이플 2,325% / 저격총 3,487.5% 피해"},{"color":"파랑","level":154,"type":"active","skill":"피의 장벽","weaponGroup":"검","cooldown":20,"mp":130,"ultimate":false,"effect":"최대 5회 공격을 막고 반격, 총 1,625% 피해"},{"color":"초록","level":154,"type":"passive","effect":"방어력 +16%","statTags":["방어력"]}]},{"monster":"드로이드 지원기","level":157,"boss":false,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":157,"type":"active","skill":"블러드 피어스","weaponGroup":"창","cooldown":10,"mp":90,"ultimate":false,"effect":"1초 후 창 공격 580% 피해 3회, 총 1,740% 피해"},{"color":"파랑","level":157,"type":"passive","effect":"재사용 대기시간 감소 +8%","statTags":["쿨타임 감소"]},{"color":"초록","level":157,"type":"passive","effect":"최대 체력 +15%","statTags":["최대 HP"]}]},{"monster":"보안드론C","level":160,"boss":false,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":160,"type":"passive","effect":"방어구 관통 +10%","statTags":["방어 관통"]},{"color":"파랑","level":160,"type":"active","skill":"그림자진동","weaponGroup":"단검","cooldown":12,"mp":110,"ultimate":false,"effect":"9초 은신, 이동 속도 증가. 은신 중 첫 타격 560% 및 주변에 추가 280% 피해"},{"color":"초록","level":160,"type":"active","skill":"사혼개화","weaponGroup":"사이드","cooldown":12,"mp":110,"ultimate":false,"effect":"반경 9블록 최대 12명에게 각각 2,000% 피해"}]},{"monster":"탱크 드로이드 일반형","level":163,"boss":false,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":163,"type":"active","skill":"파성압권","weaponGroup":"건틀릿","cooldown":16,"mp":150,"ultimate":false,"effect":"1,562% + 1,988%, 총 3,550% 피해"},{"color":"파랑","level":163,"type":"active","skill":"추적 영혼구","weaponGroup":"대검","cooldown":8,"mp":75,"ultimate":false,"effect":"유도 구체와 폭발, 총 약 1,400% 피해"},{"color":"초록","level":163,"type":"passive","effect":"최대 체력 +15%","statTags":["최대 HP"]}]},{"monster":"바스티온","level":165,"boss":true,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":165,"type":"active","skill":"격노의 일격","weaponGroup":"검","cooldown":60,"mp":500,"ultimate":true,"effect":"공중으로 떠올라 4회 참격한 뒤 내려찍어 균열과 파편을 일으킵니다. 타격당 약 1,067%, 대상당 최대 6회·총 6,400% 피해. 마지막 파괴 일격은 기절을 겁니다."},{"color":"파랑","level":165,"type":"active","skill":"옥타미사일","weaponGroup":"마도총","cooldown":60,"mp":500,"ultimate":true,"effect":"주변 25칸(스나이퍼 30칸) 안의 가까운 적에게 유도 미사일 8발을 쏟아냅니다. 발당 800%(스나이퍼 1,200%), 한 대상에게 모두 적중 시 총 6,400%(스나이퍼 9,600%) 피해. 최대 12명까지 조준하며, 표적이 쓰러지면 다음 가까운 적을 쫓고 벽에 닿으면 사라집니다."},{"color":"초록","level":165,"type":"active","skill":"히리케인 샷","weaponGroup":"활","cooldown":9,"mp":85,"ultimate":false,"effect":"약 2초 뒤 조준 지점 반경 5칸의 적 최대 8명에게 1,525% 피해를 주고 공중으로 띄웁니다."}]},{"monster":"라즈칸","level":170,"boss":true,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":170,"type":"active","skill":"영식개방:천쇄","weaponGroup":"건틀릿","cooldown":60,"mp":500,"ultimate":true,"effect":"전방으로 총 6칸 접근하며 전방 6칸에 좌우 장판으로 1,200% 피해를 3회(0.3·0.6·0.9초) 줍니다. 1.2초에 전방 7칸을 양창으로 교차 강타해 3,000% 피해를 줍니다. 시전 전체 최대 16명, 총 6,600% 피해. PvP 서버에서는 상대 플레이어에게도 적중합니다."},{"color":"파랑","level":170,"type":"active","skill":"업화의심판","weaponGroup":"완드","cooldown":60,"mp":500,"ultimate":true,"effect":"도약해 화염 창 10발을 내리꽂고 착지하며 종결 폭발을 일으킵니다. 창 폭발은 발당 약 477%, 종결 폭발은 약 1,193%이며, 화상을 포함해 한 대상에게 최대 총 6,600% 피해를 줍니다."},{"color":"초록","level":170,"type":"active","skill":"볼텍스","weaponGroup":"대검","cooldown":60,"mp":500,"ultimate":true,"effect":"전방에 세 검 고리 폭발을 일으켜 고리마다 약 2,242% 피해를 줍니다. 중심부의 적은 3회 모두 맞아 총 6,725% 피해를 받습니다. 최대 20명."}]},{"monster":"아크시온","level":170,"boss":true,"region":"균열 7층","usableInSynthesisCalc":true,"cores":[{"color":"빨강","level":170,"type":"active","skill":"마지막 춤","weaponGroup":"단검","cooldown":60,"mp":500,"ultimate":true,"effect":"칼날을 소환해 연속 투척과 회전 베기, 난무를 이어간 뒤 관통 베기로 마무리합니다. 타격당 290%, 잔폭 1,450%, 한 대상 최대 총 7,250% 피해. 관통 베기에 맞은 적은 기절합니다."},{"color":"파랑","level":170,"type":"active","skill":"월식:종언의 낫","weaponGroup":"사이드","cooldown":60,"mp":500,"ultimate":true,"effect":"14칸 안의 적을 지정한 지역에 월식을 전개합니다. 반경 6칸(PvP 5칸)에 1,320%와 5,280% 피해를 주며, 시전 전체 최대 12마리까지 적중합니다."},{"color":"초록","level":170,"type":"active","skill":"청엽창진","weaponGroup":"창","cooldown":60,"mp":500,"ultimate":true,"effect":"주변 열 방향으로 창기를 펼쳐 6,600% 피해를 줍니다. 여러 줄기에 겹쳐도 대상당 1회만 적중합니다."}]},{"monster":"옥토단 총잡이","level":70,"boss":false,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":70,"type":"passive","effect":"마력 +60","statTags":["마력"]},{"color":"파랑","level":70,"type":"passive","effect":"낚시 생활 경험치 +10%","statTags":[],"lifeCategory":"낚시"},{"color":"초록","level":70,"type":"passive","effect":"연금 생활 경험치 +10%","statTags":[],"lifeCategory":"연금"}]},{"monster":"옥토단 검객","level":75,"boss":false,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":75,"type":"passive","effect":"치명타 확률 +3%","statTags":["치명타 확률"]},{"color":"파랑","level":75,"type":"passive","effect":"채집 피해 +15%","statTags":[],"lifeCategory":"채집"},{"color":"초록","level":75,"type":"passive","effect":"채집 생활 경험치 +10%","statTags":[],"lifeCategory":"채집"}]},{"monster":"바위게","level":80,"boss":false,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":80,"type":"passive","effect":"요리 생활 경험치 +10%","statTags":[],"lifeCategory":"요리"},{"color":"파랑","level":80,"type":"passive","effect":"채광 생활 경험치 +12%","statTags":[],"lifeCategory":"채광"},{"color":"초록","level":80,"type":"passive","effect":"최대 활력 +600","statTags":[]}]},{"monster":"데드비어드단 선원","level":86,"boss":false,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":86,"type":"passive","effect":"마력 +75","statTags":["마력"]},{"color":"파랑","level":86,"type":"passive","effect":"입질 대기시간 감소 +8%","statTags":[],"lifeCategory":"낚시"},{"color":"초록","level":86,"type":"passive","effect":"제련 생활 경험치 +12%","statTags":[],"lifeCategory":"제련"}]},{"monster":"약탈선 칼잡이","level":92,"boss":false,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":92,"type":"passive","effect":"공격력 +85","statTags":["공격력"]},{"color":"파랑","level":92,"type":"passive","effect":"채광 피해 +15%","statTags":[],"lifeCategory":"채광"},{"color":"초록","level":92,"type":"passive","effect":"채집 맥동 확률 +6%","statTags":[],"lifeCategory":"채집"}]},{"monster":"약탈선 총잡이","level":98,"boss":false,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":98,"type":"passive","effect":"최대 활력 +1500","statTags":[]},{"color":"파랑","level":98,"type":"passive","effect":"채광 크리티컬 확률 +8%","statTags":[],"lifeCategory":"채광"},{"color":"초록","level":98,"type":"passive","effect":"일반 어획 크기 증가 확률 +8%","statTags":[],"lifeCategory":"낚시"}]},{"monster":"약탈선 버커니어","level":104,"boss":false,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":104,"type":"passive","effect":"연금 생활 경험치 +20%","statTags":[],"lifeCategory":"연금"},{"color":"파랑","level":104,"type":"passive","effect":"제련 생활 경험치 +20%","statTags":[],"lifeCategory":"제련"},{"color":"초록","level":104,"type":"passive","effect":"요리 생활 경험치 +20%","statTags":[],"lifeCategory":"요리"}]},{"monster":"산적 암살자","level":110,"boss":false,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":110,"type":"passive","effect":"채집 생활 경험치 +30%","statTags":[],"lifeCategory":"채집"},{"color":"파랑","level":110,"type":"passive","effect":"채집 맥동 확률 +10%","statTags":[],"lifeCategory":"채집"},{"color":"초록","level":110,"type":"passive","effect":"채집 피해 +30%","statTags":[],"lifeCategory":"채집"}]},{"monster":"산적 궁수","level":120,"boss":false,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":120,"type":"passive","effect":"낚시 생활 경험치 +30%","statTags":[],"lifeCategory":"낚시"},{"color":"파랑","level":120,"type":"passive","effect":"일반 어획 크기 증가 확률 +15%","statTags":[],"lifeCategory":"낚시"},{"color":"초록","level":120,"type":"passive","effect":"입질 대기시간 감소 +30%","statTags":[],"lifeCategory":"낚시"}]},{"monster":"산적 난투꾼","level":137,"boss":false,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":137,"type":"passive","effect":"채광 생활 경험치 +30%","statTags":[],"lifeCategory":"채광"},{"color":"파랑","level":137,"type":"passive","effect":"채광 크리티컬 확률 +15%","statTags":[],"lifeCategory":"채광"},{"color":"초록","level":137,"type":"passive","effect":"채광 피해 +30%","statTags":[],"lifeCategory":"채광"}]},{"monster":"옥토캡틴","level":150,"boss":false,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":150,"type":"passive","effect":"요리 제작 활력 소모량 감소 +30%","statTags":[],"lifeCategory":"요리"},{"color":"파랑","level":150,"type":"passive","effect":"연금 제작 활력 소모량 감소 +30%","statTags":[],"lifeCategory":"연금"},{"color":"초록","level":150,"type":"passive","effect":"제련 제작 활력 소모량 감소 +30%","statTags":[],"lifeCategory":"제련"}]},{"monster":"랍스터킹","level":155,"boss":true,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":155,"type":"passive","effect":"경험치 획득 +30%","statTags":["경험치 획득"]},{"color":"파랑","level":155,"type":"passive","effect":"회피 +10%","statTags":["회피"]},{"color":"초록","level":155,"type":"passive","effect":"방어구 관통 +10%","statTags":["방어 관통"]}]},{"monster":"데드비어드 캡틴","level":160,"boss":true,"region":"무법의 섬","usableInSynthesisCalc":false,"cores":[{"color":"빨강","level":160,"type":"passive","effect":"쿨타임 감소 +8%","statTags":["쿨타임 감소"]},{"color":"파랑","level":160,"type":"passive","effect":"치명타 확률 +8%","statTags":["치명타 확률"]},{"color":"초록","level":160,"type":"passive","effect":"보스 피해 +35%","statTags":["보스 피해"]}]}]};
+</script>
+<script>
+(function () {
+  "use strict";
+
+  var DB = window.CORE_DB;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (v) {
+    return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  };
+  var norm = function (s) { return String(s || "").toLocaleLowerCase("ko").replace(/\s+/g, ""); };
+  var COLOR_CLASS = { "빨강": "c-red", "파랑": "c-blue", "초록": "c-green" };
+  var COLORS = ["빨강", "파랑", "초록"];
+
+  // ---------- data prep ----------
+  var monsters = DB.monsters.map(function (m, i) {
+    m.id = i;
+    m.cores.forEach(function (c) {
+      c.monster = m;
+      c.searchText = norm([m.monster, c.skill, c.effect, c.weaponGroup, c.combatType].join(" "));
+    });
+    return m;
+  });
+  var allCores = [];
+  monsters.forEach(function (m) { m.cores.forEach(function (c) { allCores.push(c); }); });
+  var LEVELS = DB.synthesisLevels.slice().sort(function (a, b) { return a - b; });
+  var pool = monsters.filter(function (m) { return m.usableInSynthesisCalc; });
+
+  $("m-total").textContent = monsters.length;
+  $("c-total").textContent = allCores.length;
+  $("catalog-lede").textContent =
+    "몬스터 " + monsters.length + "종이 남기는 코어 " + allCores.length +
+    "개를 지역, 무기군, 스탯으로 찾아보세요. 몬스터마다 빨강·파랑·초록 세 가지 코어가 있습니다.";
+
+  // ---------- filters ----------
+  function countBy(list, fn) {
+    var map = new Map();
+    list.forEach(function (x) {
+      [].concat(fn(x)).forEach(function (k) { if (k) map.set(k, (map.get(k) || 0) + 1); });
+    });
+    return map;
+  }
+  var weaponCounts = countBy(allCores, function (c) { return c.type === "active" ? c.weaponGroup : null; });
+  var statCounts = countBy(allCores, function (c) { return c.statTags || []; });
+  var lifeCounts = countBy(allCores, function (c) { return c.lifeCategory; });
+  var regionCounts = countBy(monsters, function (m) { return m.region; });
+
+  var GROUPS = {
+    region: {
+      level: "monster",
+      options: DB.regions.map(function (r) { return [r, r.replace("균열 ", ""), regionCounts.get(r) || 0]; }),
+      test: function (m, v) { return m.region === v; }
+    },
+    boss: {
+      level: "monster",
+      options: [["normal", "일반", monsters.filter(function (m) { return !m.boss; }).length],
+                ["boss", "보스", monsters.filter(function (m) { return m.boss; }).length]],
+      test: function (m, v) { return v === "boss" ? m.boss : !m.boss; }
+    },
+    color: {
+      level: "core",
+      options: COLORS.map(function (c) { return [c, c, allCores.filter(function (x) { return x.color === c; }).length]; }),
+      test: function (c, v) { return c.color === v; }
+    },
+    kind: {
+      level: "core",
+      options: [["active", "액티브 스킬", allCores.filter(function (c) { return c.type === "active"; }).length],
+                ["ult", "궁극기", allCores.filter(function (c) { return c.ultimate; }).length],
+                ["passive", "패시브", allCores.filter(function (c) { return c.type === "passive"; }).length]],
+      test: function (c, v) { return v === "ult" ? !!c.ultimate : c.type === v; }
+    },
+    weapon: {
+      level: "core",
+      options: sortedEntries(weaponCounts),
+      test: function (c, v) { return c.type === "active" && c.weaponGroup === v; }
+    },
+    stat: {
+      level: "core",
+      options: sortedEntries(statCounts),
+      test: function (c, v) { return (c.statTags || []).indexOf(v) >= 0; }
+    },
+    life: {
+      level: "core",
+      options: ["채집", "채광", "낚시", "연금", "제련", "요리"].filter(function (k) { return lifeCounts.get(k); })
+        .map(function (k) { return [k, k, lifeCounts.get(k)]; }),
+      test: function (c, v) { return c.lifeCategory === v; }
     }
+  };
+  function sortedEntries(map) {
+    return Array.from(map.entries()).sort(function (a, b) { return b[1] - a[1]; })
+      .map(function (e) { return [e[0], e[0], e[1]]; });
+  }
 
-    function initGame() {
-      grid.innerHTML = ""; desks.length = 0; score = 0; anger = 0; timeLeft = 60; currentState = "NORMAL"; isSpurtMode = false;
-      updateUI();
+  var selected = {};
+  Object.keys(GROUPS).forEach(function (g) { selected[g] = new Set(); });
 
-      for (let i = 0; i < 25; i++) {
-        const wrapper = document.createElement('div');
-        wrapper.classList.add('desk-wrapper');
-        const desk = document.createElement('div');
-        desk.classList.add('desk');
-        desk.innerText = "열공";
-        desk.dataset.status = "awake";
-        
-        // mousedown 대신 pointerdown 사용 (모바일/PC 모두 딜레이 없이 가장 빠르게 인식)
-        // 불필요한 e.target !== desk 조건문 제거
-        desk.addEventListener('pointerdown', (e) => {
-          if (desk.dataset.status === "sleeping") {
-            desk.dataset.status = "awake"; 
-            desk.classList.remove('sleeping'); 
-            desk.innerText = "열공";
-            score++; 
-            updateUI();
-          } else {
-            if(currentState !== "GREEN") { 
-              anger++; 
-              showTeacherSpeech("거기 누구야! 집중 안 해?"); 
-              showStudentComplaint(wrapper); 
-              updateUI(); 
-              checkGameOver(); 
-            }
-          }
+  function renderChips() {
+    document.querySelectorAll(".chips[data-group]").forEach(function (box) {
+      var g = box.dataset.group, def = GROUPS[g];
+      box.innerHTML = def.options.map(function (o) {
+        var on = selected[g].has(o[0]);
+        var dot = g === "color" ? '<span class="dot ' + COLOR_CLASS[o[0]] + '" style="background:var(--c)"></span>' : "";
+        return '<button type="button" class="chip" data-group="' + g + '" data-value="' + esc(o[0]) +
+          '" aria-pressed="' + on + '">' + dot + "<span>" + esc(o[1]) + "</span><small>" + o[2] + "</small></button>";
+      }).join("");
+    });
+  }
+  $("filters").addEventListener("click", function (e) {
+    var b = e.target.closest(".chip");
+    if (!b) return;
+    var set = selected[b.dataset.group], v = b.dataset.value;
+    if (set.has(v)) set.delete(v); else set.add(v);
+    b.setAttribute("aria-pressed", set.has(v));
+    page = 1;
+    renderCatalog();
+  });
+  $("reset").addEventListener("click", function () {
+    Object.keys(selected).forEach(function (g) { selected[g].clear(); });
+    $("q").value = "";
+    page = 1;
+    renderChips();
+    renderCatalog();
+  });
+  $("toggle-filters").addEventListener("click", function () {
+    var open = $("filters").classList.toggle("open");
+    this.setAttribute("aria-expanded", open);
+  });
+
+  // ---------- catalog ----------
+  var PAGE_SIZE = 48, page = 1;
+
+  function coreFilterActive(q) {
+    return !!q || ["color", "kind", "weapon", "stat", "life"].some(function (g) { return selected[g].size; });
+  }
+  function coreMatches(c, q, qNum) {
+    if (q) {
+      var hit = c.searchText.indexOf(q) >= 0;
+      if (!hit && qNum !== null) hit = c.level === qNum || c.monster.level === qNum;
+      if (!hit) return false;
+    }
+    for (var g in GROUPS) {
+      if (GROUPS[g].level !== "core" || !selected[g].size) continue;
+      var ok = false;
+      selected[g].forEach(function (v) { if (GROUPS[g].test(c, v)) ok = true; });
+      if (!ok) return false;
+    }
+    return true;
+  }
+  function monsterMatches(m) {
+    for (var g in GROUPS) {
+      if (GROUPS[g].level !== "monster" || !selected[g].size) continue;
+      var ok = false;
+      selected[g].forEach(function (v) { if (GROUPS[g].test(m, v)) ok = true; });
+      if (!ok) return false;
+    }
+    return true;
+  }
+
+  function highlight(text, raw) {
+    var t = esc(text);
+    if (!raw) return t;
+    var r = esc(raw);
+    var i = t.toLocaleLowerCase("ko").indexOf(r.toLocaleLowerCase("ko"));
+    if (i < 0) return t;
+    return t.slice(0, i) + "<mark>" + t.slice(i, i + r.length) + "</mark>" + t.slice(i + r.length);
+  }
+  function fmtCd(cd) {
+    if (cd === undefined || cd === null) return "";
+    return typeof cd === "number" ? cd + "초" : String(cd);
+  }
+
+  function coreHTML(c, dim, raw) {
+    var cls = "core " + (COLOR_CLASS[c.color] || "") + (dim ? " dim" : "");
+    var top = '<span class="core-color">' + c.color + "</span>";
+    if (c.type === "active") {
+      top += '<span class="core-skill">' + highlight(c.skill, raw) + "</span>";
+      if (c.ultimate) top += '<span class="ult">궁극기</span>';
+    } else {
+      top += '<span class="core-kind">패시브' + (c.lifeCategory ? " · " + c.lifeCategory : "") + "</span>";
+    }
+    if (c.level !== c.monster.level) top += '<span class="core-lv">Lv.' + c.level + "</span>";
+    var meta = [];
+    if (c.type === "active") {
+      if (c.weaponGroup) meta.push("<span>" + esc(c.weaponGroup) + (c.combatType && c.combatType !== c.weaponGroup && c.combatType !== "전 무기" ? " · " + esc(c.combatType) : "") + "</span>");
+      if (c.cooldown != null) meta.push("<span>쿨 <b>" + esc(fmtCd(c.cooldown)) + "</b></span>");
+      if (c.mp != null) meta.push("<span>MP <b>" + esc(c.mp) + "</b></span>");
+      if (c.hp != null) meta.push("<span>HP <b>" + esc(c.hp) + "</b></span>");
+    }
+    return '<div class="' + cls + '"><div class="core-body"><div class="core-top">' + top + "</div>" +
+      '<p class="core-effect">' + highlight(c.effect || "효과 미등록", raw) + "</p>" +
+      (meta.length ? '<div class="meta">' + meta.join("") + "</div>" : "") + "</div></div>";
+  }
+
+  function renderCatalog() {
+    var raw = $("q").value.trim();
+    var q = norm(raw);
+    var qNum = /^\d+$/.test(raw) ? Number(raw) : null;
+    var coreF = coreFilterActive(q);
+
+    var list = [];
+    monsters.forEach(function (m) {
+      if (!monsterMatches(m)) return;
+      var hits = m.cores.filter(function (c) { return coreMatches(c, q, qNum); });
+      if (!hits.length && q && norm(m.monster).indexOf(q) >= 0 &&
+          !["color", "kind", "weapon", "stat", "life"].some(function (g) { return selected[g].size; })) {
+        hits = m.cores.slice();
+      }
+      if (hits.length) list.push({ m: m, hits: hits });
+    });
+
+    var sort = $("sort").value;
+    list.sort(function (a, b) {
+      if (sort === "name") return a.m.monster.localeCompare(b.m.monster, "ko");
+      var d = sort === "lv-desc" ? b.m.level - a.m.level : a.m.level - b.m.level;
+      return d || a.m.id - b.m.id;
+    });
+
+    var nCores = list.reduce(function (s, x) { return s + x.hits.length; }, 0);
+    $("count").textContent = "몬스터 " + list.length + "종 · 코어 " + nCores + "개" +
+      (coreF ? " 일치" : "") + " / 전체 " + allCores.length + "개";
+
+    var nameRaw = raw && qNum === null ? raw : "";
+    var cardHTML = function (x) {
+      var m = x.m;
+      var cores = m.cores.map(function (c) { return coreHTML(c, coreF && x.hits.indexOf(c) < 0, nameRaw); }).join("");
+      var usable = m.usableInSynthesisCalc;
+      return '<article class="card" id="m-' + m.id + '">' +
+        '<header class="card-head"><div><h3>' + highlight(m.monster, nameRaw) + '</h3><div class="tags">' +
+        (m.boss ? '<span class="tag boss">보스</span>' : '<span class="tag">일반</span>') +
+        '</div></div><div class="lv"><small>Lv.</small>' + m.level + "</div></header>" +
+        '<div class="cores">' + cores + "</div>" +
+        '<div class="card-foot"><button type="button" class="add" data-add="' + m.id + '"' +
+        (usable ? "" : ' disabled title="원본 계산기에서 제외된 몬스터"') + ">" +
+        (usable ? "재료로 담기" : "합성 재료 제외") + "</button></div></article>";
+    };
+    var sections = [], nav = [];
+    DB.regions.forEach(function (r, ri) {
+      var items = list.filter(function (x) { return x.m.region === r; });
+      var total = regionCounts.get(r) || 0;
+      nav.push('<button type="button" class="floor-link" data-floor="' + ri + '"' + (items.length ? "" : " disabled") + ">" +
+        esc(r.replace("균열 ", "")) + "<small>" + items.length + "</small></button>");
+      if (!items.length) return;
+      var lvs = items.map(function (x) { return x.m.level; });
+      var lo = Math.min.apply(null, lvs), hi = Math.max.apply(null, lvs);
+      var bosses = items.filter(function (x) { return x.m.boss; }).length;
+      var nc = items.reduce(function (s, x) { return s + x.hits.length; }, 0);
+      sections.push('<section class="floor" id="floor-' + ri + '"><header class="floor-head"><h2>' + esc(r) + "</h2>" +
+        '<span class="floor-meta">Lv.' + lo + (hi !== lo ? "~" + hi : "") + " · 몬스터 " + items.length +
+        (items.length !== total ? "/" + total : "") + "종" + (bosses ? " · 보스 " + bosses : "") + " · 코어 " + nc + "개</span></header>" +
+        '<div class="grid">' + items.map(cardHTML).join("") + "</div></section>");
+    });
+    $("floor-nav").innerHTML = nav.join("");
+    $("grid").innerHTML = sections.join("");
+    $("empty").hidden = list.length > 0;
+  }
+
+  var qTimer;
+  $("q").addEventListener("input", function () {
+    clearTimeout(qTimer);
+    qTimer = setTimeout(function () { page = 1; renderCatalog(); }, 120);
+  });
+  $("sort").addEventListener("change", function () { page = 1; renderCatalog(); });
+  $("floor-nav").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-floor]");
+    if (!b) return;
+    var el = $("floor-" + b.dataset.floor);
+    if (!el) return;
+    var off = document.querySelector(".masthead").getBoundingClientRect().bottom + $("floor-nav").offsetHeight + 8;
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - off, behavior: "smooth" });
+  });
+  function syncHeaderHeight() {
+    document.documentElement.style.setProperty("--mast-h", document.querySelector(".masthead").offsetHeight + "px");
+  }
+  window.addEventListener("resize", syncHeaderHeight);
+  syncHeaderHeight();
+  $("grid").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-add]");
+    if (b) addToSlot(Number(b.dataset.add));
+  });
+
+  // ---------- synthesis core logic ----------
+  function resultLevel(avg) {
+    var best = LEVELS[0];
+    for (var i = 0; i < LEVELS.length; i++) {
+      if (Math.abs(LEVELS[i] - avg) < Math.abs(best - avg)) best = LEVELS[i];
+    }
+    return best;
+  }
+  var bySum = {};
+  function resultForSum(sum) {
+    if (!(sum in bySum)) bySum[sum] = resultLevel(sum / 3);
+    return bySum[sum];
+  }
+  function fmtAvg(x) { return (Math.round(x * 100) / 100).toFixed(2); }
+
+  // ---------- predict ----------
+  var slots = [$("s1"), $("s2"), $("s3")];
+  function monsterOptions(includeEmpty) {
+    var html = includeEmpty ? '<option value="">코어 선택</option>' : "";
+    DB.regions.forEach(function (r) {
+      var ms = pool.filter(function (m) { return m.region === r; });
+      if (!ms.length) return;
+      html += '<optgroup label="' + esc(r) + '">' + ms.map(function (m) {
+        return '<option value="' + m.id + '">Lv.' + m.level + " " + esc(m.monster) + (m.boss ? " (보스)" : "") + "</option>";
+      }).join("") + "</optgroup>";
+    });
+    return html;
+  }
+  var optHTML = monsterOptions(true);
+  slots.forEach(function (s) { s.innerHTML = optHTML; s.addEventListener("change", renderPredict); });
+
+  function addToSlot(id) {
+    var i = slots.findIndex(function (s) { return !s.value; });
+    if (i < 0) i = 2;
+    slots[i].value = String(id);
+    renderPredict();
+    saveSlots();
+    toast(monsters[id].monster + " 코어를 재료 " + (i + 1) + "에 담았습니다");
+  }
+  $("clear-slots").addEventListener("click", function () {
+    slots.forEach(function (s) { s.value = ""; });
+    renderPredict();
+    saveSlots();
+  });
+
+  function renderPredict() {
+    saveSlots();
+    var picked = slots.map(function (s) { return s.value === "" ? null : monsters[Number(s.value)]; });
+    var chosen = picked.filter(Boolean);
+    var out = $("predict-out");
+    if (chosen.length < 3) {
+      var msg = "재료 " + (3 - chosen.length) + "개를 더 고르면 결과가 나옵니다.";
+      if (chosen.length === 2) {
+        // show what each possible third material level would give
+        var s2 = chosen[0].level + chosen[1].level;
+        var outcomes = new Map();
+        LEVELS.forEach(function (lv) {
+          var r = resultForSum(s2 + lv);
+          if (!outcomes.has(r)) outcomes.set(r, [lv, lv]); else outcomes.get(r)[1] = lv;
         });
-        
-        wrapper.appendChild(desk); grid.appendChild(wrapper); desks.push(desk);
+        msg += '<div class="outcomes" style="margin-top:10px"><h3>세 번째 재료 레벨에 따른 결과</h3><div class="outcome-list">' +
+          Array.from(outcomes.entries()).map(function (e) {
+            var range = e[1][0] === e[1][1] ? "Lv." + e[1][0] : "Lv." + e[1][0] + "~" + e[1][1];
+            return '<span class="outcome" style="cursor:default">' + range + " → <b>" + e[0] + "</b></span>";
+          }).join("") + "</div></div>";
       }
-      
-      gameInterval = setInterval(processSleepingLogic, 1000);
-      timerInterval = setInterval(processTimerLogic, 1000);
-      orbInterval = setInterval(spawnOrbRandomly, 3000); 
+      out.innerHTML = '<div class="hint-box">' + msg + "</div>";
+      return;
     }
-
-    function showStudentComplaint(targetWrapper) {
-      const complaints = ["나 안 자는데?", "저 공부 중인데요;", "쉿! 집중 중!", "으악 깜짝이야!"];
-      const randomText = complaints[Math.floor(Math.random() * complaints.length)];
-      const bubble = document.createElement('div');
-      bubble.classList.add('complaint-bubble'); bubble.innerText = randomText;
-      targetWrapper.appendChild(bubble);
-      setTimeout(() => { if(bubble) bubble.remove(); }, 800);
+    var a = chosen[0], b = chosen[1], c = chosen[2];
+    var sum = a.level + b.level + c.level, avg = sum / 3, res = resultForSum(sum);
+    var bosses = chosen.filter(function (m) { return m.boss; }).length;
+    var html = "";
+    if (a.id === b.id && b.id === c.id) {
+      html += '<div class="warn">같은 코어 3개는 잠재 각성 대상이라 일반 합성이 되지 않습니다.</div>';
     }
+    html += '<div class="result-hero"><div class="big"><small>Lv.</small>' + res + "</div>" +
+      '<div class="calc-line">(' + a.level + " + " + b.level + " + " + c.level + ") ÷ 3 = " + fmtAvg(avg) + "</div>" +
+      '<div class="kind">' + (bosses ? "보스 재료 " + bosses + "개 · " + (pool.some(function (m) { return m.boss && m.level === res; }) ? "보스 코어를 노릴 수 있음" : "이 레벨엔 보스 코어가 없음") : "보스 재료 없음 · 일반 코어") + "</div></div>";
+    var cands = pool.filter(function (m) { return m.level === res && (bosses ? true : !m.boss); });
+    cands.sort(function (x, y) { return (y.boss - x.boss) || x.monster.localeCompare(y.monster, "ko"); });
+    html += '<div class="outcomes"><h3>Lv.' + res + " 코어 " + cands.length + "종" + (bosses ? " (보스 포함)" : "") +
+      '</h3><div class="outcome-list">' + cands.map(function (m) {
+        return '<button type="button" class="outcome" data-goto="' + m.id + '">' + esc(m.monster) +
+          (m.boss ? ' <span class="bossmark">보스</span>' : "") + "</button>";
+      }).join("") + "</div></div>";
+    html += '<p class="note">어떤 몬스터·색의 코어가 나오는지는 원본 자료에 없어서, 결과 레벨에 있는 코어를 모두 보여줍니다.</p>';
+    out.innerHTML = html;
+  }
+  $("predict-out").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-goto]");
+    if (!b) return;
+    var m = monsters[Number(b.dataset.goto)];
+    $("q").value = m.monster;
+    Object.keys(selected).forEach(function (g) { selected[g].clear(); });
+    renderChips();
+    page = 1;
+    location.hash = "catalog";
+    renderCatalog();
+  });
 
-    function updateUI() {
-      const sleepingCount = desks.filter(d => d.dataset.status === "sleeping").length;
-      document.getElementById('score').innerText = score;
-      document.getElementById('timer').innerText = timeLeft;
-      
-      let modeText = isSpurtMode ? " 🔥마지막 스퍼트🔥" : "";
-      angerBar.innerText = `💢 분노: ${anger} / 6 (${sleepingCount}명 취침)${modeText}`;
-      
-      const buffText = document.getElementById('active-buff');
-      const goldBanner = document.getElementById('golden-banner');
-      goldBanner.style.display = (currentState === "GOLD") ? "block" : "none";
+  function saveSlots() {
+    try { localStorage.setItem("core-slots", JSON.stringify(slots.map(function (s) { return s.value; }))); } catch (e) { /* ignore */ }
+  }
+  function loadSlots() {
+    try {
+      var v = JSON.parse(localStorage.getItem("core-slots") || "null");
+      if (Array.isArray(v)) v.forEach(function (x, i) { if (slots[i] && x !== "" && monsters[Number(x)]) slots[i].value = x; });
+    } catch (e) { /* ignore */ }
+  }
 
-      updateTeacherVisual(sleepingCount);
+  // ---------- find combos ----------
+  var levelOpts = LEVELS.map(function (l) { return '<option value="' + l + '">Lv.' + l + "</option>"; }).join("");
+  $("target").innerHTML = levelOpts;
+  $("target").value = "100";
+  ["req1", "req2"].forEach(function (id) { $(id).innerHTML = '<option value="">없음</option>' + levelOpts; });
 
-      if(currentState === "BLUE") buffText.innerText = "🔵 파랑 구슬: 학생들이 졸음을 참는 중..";
-      else if(currentState === "GREEN") buffText.innerText = "🟢 초록 구슬: 고3 선생님은 모든 걸 이해하십니다..";
-      else if(currentState === "GOLD") buffText.innerText = "🟡 황금 구슬: 이제 곧 집간다!! (분노 초기화!)";
-      else if(currentState === "RED") buffText.innerText = "🔴 빨간 구슬: 식곤증이 몰려오는 5교시!! (강제 디버프!)";
-      else if(currentState === "BLACK") buffText.innerText = "⚫ 검정 구슬: 선생님이 교무실에 가셨습니다! (강제 디버프!)";
-      else buffText.innerText = isSpurtMode ? "⚠️ 경고: 수업 종료 직전! 졸음 속도 2배 증가!" : "";
-    }
+  var combos = [], cShown = 0, C_PAGE = 60;
+  var byLevel = new Map();
+  pool.forEach(function (m) {
+    if (!byLevel.has(m.level)) byLevel.set(m.level, []);
+    byLevel.get(m.level).push(m);
+  });
 
-    function updateTeacherVisual(sleepingCount) {
-      teacherSprite.style.display = "block"; teacherSprite.style.filter = "none";
-      if(currentState === "BLACK") { teacherSprite.style.display = "none"; return; }
-      if(currentState === "GREEN") { teacherSprite.innerText = "👴"; showTeacherSpeech("허허.. 피곤할 때도 있는 법이지.."); return; }
-      if(currentState === "GOLD") { teacherSprite.innerText = "🥳"; teacherSprite.style.transform = "scale(1.2)"; return; }
-
-      if(anger === 0) teacherSprite.innerText = isSpurtMode ? "⚡" : "👨‍🏫";
-      else if(anger <= 2) teacherSprite.innerText = "😠";
-      else if(anger <= 4) { teacherSprite.innerText = "😡"; teacherSprite.style.transform = "scale(1.2)"; }
-      else if(anger <= 5) { teacherSprite.innerText = "🌋"; teacherSprite.style.transform = "scale(1.4)"; showTeacherSpeech("너희들 정말 이럴 거야?!"); }
-
-      if(sleepingCount >= 4 && currentState === "NORMAL") { teacherSprite.innerText = "😨"; showTeacherSpeech("교실 꼴이 이게 뭐야!"); }
-    }
-
-    function showTeacherSpeech(text) {
-        teacherSpeech.innerText = text; teacherSpeech.style.display = "block";
-        setTimeout(() => { teacherSpeech.style.display = "none"; }, 2000);
-    }
-
-    function changeState(newState, duration) {
-      if(stateTimeout) clearTimeout(stateTimeout);
-      currentState = newState;
-      
-      if(newState === "GOLD") {
-        anger = 0; 
-        showTeacherSpeech("종 치기 직전이니 봐준다! 칼퇴 준비!"); 
-        desks.forEach(desk => { desk.dataset.status = "awake"; desk.classList.remove('sleeping'); desk.innerText = "열공"; });
-      }
-      
-      updateUI();
-      stateTimeout = setTimeout(() => { currentState = "NORMAL"; updateUI(); }, duration * 1000);
-    }
-
-    function processSleepingLogic() {
-      const sleepingCount = desks.filter(d => d.dataset.status === "sleeping").length;
-      if(currentState === "BLACK" && sleepingCount > 0) {
-        if(Math.random() < (sleepingCount * 0.08)) { currentState = "NORMAL"; updateUI(); return; }
-      }
-      if (sleepingCount > 5 && currentState !== "GREEN") { endGame(false, "동시에 자는 학생이 5명을 넘었습니다!"); return; }
-
-      let spawnLimit = isSpurtMode ? (Math.floor(Math.random() * 2) + 2) : (Math.floor(Math.random() * 2) + 1); 
-      
-      if (currentState === "GOLD") return; 
-      if (currentState === "BLUE") { if(sleepingCount >= 1) return; spawnLimit = 1; if(Math.random() > 0.4) return; }
-      if (currentState === "RED") spawnLimit = isSpurtMode ? 4 : (Math.floor(Math.random() * 3) + 2); 
-      if (currentState === "BLACK") spawnLimit = Math.floor(Math.random() * 2) + 2; 
-
-      let spawned = 0;
-      const shuffled = [...desks].sort(() => 0.5 - Math.random());
-      for(let desk of shuffled) {
-        if(spawned >= spawnLimit) break;
-        if(desk.dataset.status === "awake") {
-          desk.dataset.status = "sleeping"; desk.classList.add('sleeping'); desk.innerText = "Zzz..";
-          spawned++;
+  function findCombos() {
+    var target = Number($("target").value);
+    var bossMode = document.querySelector('input[name="bossmode"]:checked').value === "yes";
+    var req = [$("req1").value, $("req2").value].filter(Boolean).map(Number);
+    var cand = bossMode ? pool : pool.filter(function (m) { return !m.boss; });
+    var groups = new Map();
+    var n = cand.length;
+    for (var i = 0; i < n; i++) {
+      var A = cand[i];
+      for (var j = i; j < n; j++) {
+        var B = cand[j];
+        for (var k = j; k < n; k++) {
+          var C = cand[k];
+          if (i === j && j === k) continue;
+          var sum = A.level + B.level + C.level;
+          if (resultForSum(sum) !== target) continue;
+          var bosses = (A.boss ? 1 : 0) + (B.boss ? 1 : 0) + (C.boss ? 1 : 0);
+          if (bossMode ? bosses < 1 : bosses > 0) continue;
+          var lv = [A.level, B.level, C.level].sort(function (x, y) { return x - y; });
+          if (req.length) {
+            var ok = req.every(function (r) {
+              return lv.filter(function (x) { return x === r; }).length >= req.filter(function (x) { return x === r; }).length;
+            });
+            if (!ok) continue;
+          }
+          var key = lv.join("-");
+          var g = groups.get(key);
+          if (!g) { g = { lv: lv, avg: sum / 3, bMin: bosses, bMax: bosses, v: 0 }; groups.set(key, g); }
+          g.v++;
+          if (bosses < g.bMin) g.bMin = bosses;
+          if (bosses > g.bMax) g.bMax = bosses;
         }
       }
-      updateUI();
     }
-
-    function processTimerLogic() {
-      timeLeft--; 
-      
-      if (timeLeft === 10 && !isSpurtMode) {
-        isSpurtMode = true;
-        showTeacherSpeech("야, 야! 종 치기 직전이다! 집중해!");
-        clearInterval(gameInterval);
-        gameInterval = setInterval(processSleepingLogic, 500); 
-      }
-      
-      updateUI();
-      if (timeLeft <= 0) endGame(true);
+    combos = Array.from(groups.values()).sort(function (x, y) {
+      return x.avg - y.avg || x.lv[0] - y.lv[0] || x.lv[1] - y.lv[1];
+    });
+    $("f-count").textContent = combos.length.toLocaleString("ko-KR");
+    $("f-min").textContent = combos.length ? fmtAvg(combos[0].avg) : "—";
+    $("f-pool").textContent = cand.length + "종";
+    cShown = 0;
+    $("rows").innerHTML = "";
+    if (!combos.length) {
+      $("rows").innerHTML = '<tr><td colspan="6" class="table-empty">이 조건으로 Lv.' + target +
+        "을 만드는 조합이 없습니다. 꼭 넣을 재료 레벨이나 목표 종류를 바꿔 보세요.</td></tr>";
     }
-
-    function spawnOrbRandomly() {
-      if(document.querySelectorAll('.orb').length >= 3) return; 
-      const randomIdx = Math.floor(Math.random() * 25);
-      const targetWrapper = grid.children[randomIdx];
-      
-      if(targetWrapper.querySelector('.orb')) return;
-      
-      const types = [ 
-        {name:'blue', time:7}, 
-        {name:'green', time:7}, 
-        {name:'gold', time:5}, 
-        {name:'red', time:7}, 
-        {name:'black', time:7} 
-      ];
-      const selectedType = types[Math.floor(Math.random() * types.length)];
-      
-      if (selectedType.name === 'red' || selectedType.name === 'black') {
-        changeState(selectedType.name.toUpperCase(), selectedType.time);
-        return; 
-      }
-      
-      const orb = document.createElement('div');
-      orb.classList.add('orb', selectedType.name);
-      
-      // 구슬도 pointerdown으로 변경
-      orb.addEventListener('pointerdown', (e) => {
-        e.stopPropagation(); 
-        changeState(selectedType.name.toUpperCase(), selectedType.time); 
-        orb.remove();
-      });
-      targetWrapper.appendChild(orb);
-      setTimeout(() => { if(orb) orb.remove(); }, 4000);
+    renderRows();
+  }
+  function renderRows() {
+    var batch = combos.slice(cShown, cShown + C_PAGE);
+    $("rows").insertAdjacentHTML("beforeend", batch.map(function (g, n) {
+      var idx = cShown + n;
+      return '<tr data-row="' + idx + '"><td class="n">' + (idx + 1) + '</td><td><div class="lvs">' +
+        g.lv.map(function (l) { return "<span>" + l + "</span>"; }).join("") + '</div></td><td class="mono">' +
+        fmtAvg(g.avg) + "</td><td>" + (g.bMin === g.bMax ? g.bMin + "개" : g.bMin + "~" + g.bMax + "개") +
+        '</td><td class="mono">' + g.v.toLocaleString("ko-KR") + '가지</td><td><button type="button" class="expand" data-expand="' +
+        idx + '" aria-expanded="false">재료</button></td></tr>';
+    }).join(""));
+    cShown += batch.length;
+    $("f-more").hidden = cShown >= combos.length;
+  }
+  $("rows").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-expand]");
+    if (!b) return;
+    var tr = b.closest("tr");
+    var next = tr.nextElementSibling;
+    if (next && next.classList.contains("detail")) {
+      next.remove();
+      b.setAttribute("aria-expanded", "false");
+      return;
     }
+    var g = combos[Number(b.dataset.expand)];
+    var bossMode = document.querySelector('input[name="bossmode"]:checked').value === "yes";
+    var uniq = g.lv.filter(function (l, i, arr) { return arr.indexOf(l) === i; });
+    var inner = uniq.map(function (l) {
+      var ms = (byLevel.get(l) || []).filter(function (m) { return bossMode || !m.boss; });
+      return "<div><b>Lv." + l + "</b><span>" + ms.map(function (m) {
+        return esc(m.monster) + (m.boss ? ' <span class="bossmark">보스</span>' : "");
+      }).join(", ") + "</span></div>";
+    }).join("");
+    tr.insertAdjacentHTML("afterend", '<tr class="detail"><td colspan="6"><div class="detail-grid">' + inner + "</div></td></tr>");
+    b.setAttribute("aria-expanded", "true");
+  });
+  $("f-more").addEventListener("click", renderRows);
+  ["target", "req1", "req2"].forEach(function (id) { $(id).addEventListener("change", findCombos); });
+  document.querySelectorAll('input[name="bossmode"]').forEach(function (r) { r.addEventListener("change", findCombos); });
 
-    function checkGameOver() { if (anger >= 6 && currentState !== "GREEN") endGame(false, "선생님이 폭발하셨습니다!"); }
+  // ---------- toast ----------
+  var toastTimer;
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 2200);
+  }
 
-    function endGame(isClear, reason = "") {
-      clearInterval(gameInterval); clearInterval(timerInterval); clearInterval(orbInterval);
-      if(stateTimeout) clearTimeout(stateTimeout);
-      
-      document.getElementById('game-screen').style.display = 'none';
-      document.getElementById('result-screen').style.display = 'flex';
+  // ---------- routing ----------
+  function route() {
+    var v = location.hash === "#calc" ? "calc" : "catalog";
+    $("view-catalog").hidden = v !== "catalog";
+    $("view-calc").hidden = v !== "calc";
+    document.querySelectorAll(".tab").forEach(function (t) {
+      if (t.dataset.view === v) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
+    });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", route);
 
-      let rank = "";
-      let rankColor = "";
-      let rankDesc = "";
-      
-      if (score >= 60) {
-        rank = "S"; rankColor = "#eccc68"; rankDesc = "전설의 교생 선생님!!";
-      } else if (score >= 40) {
-        rank = "A"; rankColor = "#2ed573"; rankDesc = "열혈 교사 등극!";
-      } else if (score >= 20) {
-        rank = "B"; rankColor = "#1e90ff"; rankDesc = "그럭저럭 평범한 선생님";
-      } else {
-        rank = "C"; rankColor = "#ff4757"; rankDesc = "학생들에게 먹혀버린 교실..";
-      }
-
-      document.getElementById('result-title').innerText = isClear ? "🎉 무사히 수업 종료!" : "💀 수업 파탄..";
-      document.getElementById('result-reason').innerText = isClear ? "모든 정규 시간을 완벽하게 버텨냈습니다!" : `실패 사유: ${reason}`;
-      document.getElementById('result-score').innerText = `최종 점수: ${score}명 깨움`;
-      
-      const rankEl = document.getElementById('result-rank');
-      rankEl.innerText = `${rank} 랭크`;
-      rankEl.style.color = rankColor;
-      
-      document.getElementById('result-desc').innerText = rankDesc;
-    }
-
-    function returnToMain() {
-      // 명예의 전당 관련 로직 삭제 및 초기 화면으로 복귀
-      document.getElementById('student-id').value = "";
-      document.getElementById('student-name').value = "";
-      
-      document.getElementById('result-screen').style.display = 'none';
-      document.getElementById('login-screen').style.display = 'flex';
-    }
-  </script>
+  // ---------- boot ----------
+  renderChips();
+  renderCatalog();
+  loadSlots();
+  if (!slots.some(function (s) { return s.value; })) {
+    // example materials so the calculator opens in a working state
+    var ex = [90, 115, 135].map(function (l) {
+      return pool.find(function (m) { return m.level === l && !m.boss; });
+    });
+    if (ex.every(Boolean)) ex.forEach(function (m, i) { slots[i].value = String(m.id); });
+  }
+  renderPredict();
+  findCombos();
+  route();
+})();
+</script>
 </body>
 </html>
