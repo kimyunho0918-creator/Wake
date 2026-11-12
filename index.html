@@ -238,7 +238,7 @@ mark { background: var(--accent-bg); color: inherit; border-radius: 2px; padding
 .find-stats span { font-size: 11.5px; color: var(--muted); }
 .find-stats b { font-family: var(--font-mono); font-size: var(--step-1); font-variant-numeric: tabular-nums; }
 
-.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.table-wrap { position: relative; overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
 table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1); font-variant-numeric: tabular-nums; }
 .combo th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 8px 10px; background: var(--surface-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
 .combo td { padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -266,6 +266,37 @@ table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1);
   max-width: calc(100% - 32px);
 }
 
+/* ---- want panel ---- */
+.panel.wide { grid-column: 1 / -1; }
+.form-row.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.want-summary { display: grid; gap: 10px; }
+.want-target { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: center; padding: 14px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); }
+.want-target .big { grid-row: span 2; font-family: var(--font-mono); font-weight: 700; font-size: 2rem; line-height: 1; }
+.want-target .big small { font-size: .85rem; color: var(--muted); }
+.want-target .t-name { font-weight: 700; font-size: var(--step-1); }
+.want-target .t-sub { color: var(--muted); font-size: var(--step--1); }
+.rivals { margin: 0; font-size: var(--step--1); color: var(--muted); }
+.rivals b { color: var(--fg); }
+.want-list { display: grid; gap: 8px; }
+.recipe { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.recipe .n { font-family: var(--font-mono); color: var(--muted); font-size: 12px; padding-top: 4px; }
+.mats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mat { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.mat-lv { font-family: var(--font-mono); font-weight: 700; font-size: var(--step--1); }
+.mat-lv .bossmark { font-family: var(--font-body); font-size: 11px; margin-left: 4px; }
+.mat-names { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; line-height: 1.45; }
+.mat-names .have { color: var(--fg); font-weight: 700; }
+.recipe-side { display: grid; gap: 2px; text-align: right; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.recipe-side b { font-family: var(--font-mono); font-size: var(--step--1); color: var(--fg); margin-left: 4px; }
+.card-foot { gap: 4px; }
+
+@media (max-width: 860px) {
+  .form-row.three { grid-template-columns: minmax(0, 1fr); }
+  .recipe { grid-template-columns: minmax(0, 1fr); }
+  .recipe .n { display: none; }
+  .recipe-side { text-align: left; display: flex; gap: 14px; }
+}
+@media (max-width: 520px) { .mats { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 860px) {
   .calc-grid { grid-template-columns: minmax(0, 1fr); }
 }
@@ -403,6 +434,33 @@ table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1);
           </table>
         </div>
         <div class="pager"><button id="f-more" class="btn ghost" type="button" hidden>더 보기</button></div>
+      </section>
+
+      <!-- 특정 코어 뽑기 -->
+      <section class="panel wide" id="want-panel" aria-labelledby="want-title">
+        <h2 id="want-title">원하는 코어 뽑기</h2>
+        <p class="panel-sub">갖고 싶은 몬스터 코어를 고르면 그 코어가 나오는 레벨·종류로 합성되는 재료 조합을 실제 몬스터 이름으로 보여줍니다. 도감 카드의 <b>이 코어 뽑기</b>로도 고를 수 있습니다.</p>
+        <div class="form-row three">
+          <label class="field">
+            <span class="label">원하는 코어</span>
+            <select id="want"></select>
+          </label>
+          <label class="field">
+            <span class="label">꼭 쓸 재료 <small>선택 · 가진 코어</small></span>
+            <select id="have"></select>
+          </label>
+          <label class="field">
+            <span class="label">정렬</span>
+            <select id="want-sort">
+              <option value="easy">높은 재료 레벨이 낮은 순</option>
+              <option value="avg">평균 레벨 낮은 순</option>
+              <option value="many">경우의 수 많은 순</option>
+            </select>
+          </label>
+        </div>
+        <div id="want-summary" class="want-summary" aria-live="polite"></div>
+        <div id="want-list" class="want-list"></div>
+        <div class="pager"><button id="want-more" class="btn ghost" type="button" hidden>더 보기</button></div>
       </section>
     </div>
   </section>
@@ -651,7 +709,9 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
         '<div class="cores">' + cores + "</div>" +
         '<div class="card-foot"><button type="button" class="add" data-add="' + m.id + '"' +
         (usable ? "" : ' disabled title="원본 계산기에서 제외된 몬스터"') + ">" +
-        (usable ? "재료로 담기" : "합성 재료 제외") + "</button></div></article>";
+        (usable ? "재료로 담기" : "합성 재료 제외") + "</button>" +
+        (usable ? '<button type="button" class="add" data-want="' + m.id + '">이 코어 뽑기</button>' : "") +
+        "</div></article>";
     };
     var sections = [], nav = [];
     DB.regions.forEach(function (r, ri) {
@@ -696,6 +756,14 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
   $("grid").addEventListener("click", function (e) {
     var b = e.target.closest("[data-add]");
     if (b) addToSlot(Number(b.dataset.add));
+    var w = e.target.closest("[data-want]");
+    if (w) {
+      $("want").value = w.dataset.want;
+      $("have").value = "";
+      renderWant();
+      location.hash = "calc";
+      setTimeout(function () { $("want-panel").scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
+    }
   });
 
   // ---------- synthesis core logic ----------
@@ -909,6 +977,99 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
   ["target", "req1", "req2"].forEach(function (id) { $(id).addEventListener("change", findCombos); });
   document.querySelectorAll('input[name="bossmode"]').forEach(function (r) { r.addEventListener("change", findCombos); });
 
+
+  // ---------- want a specific core ----------
+  $("want").innerHTML = monsterOptions(false);
+  $("have").innerHTML = monsterOptions(true).replace("코어 선택", "없음");
+  var wantRecipes = [], wShown = 0, W_PAGE = 30;
+
+  function renderWant() {
+    var target = monsters[Number($("want").value)];
+    var haveV = $("have").value;
+    var have = haveV === "" ? null : monsters[Number(haveV)];
+    var bossMode = target.boss;
+    var lvT = target.level;
+    var cand = bossMode ? pool : pool.filter(function (m) { return !m.boss; });
+    var rivals = pool.filter(function (m) { return m.level === lvT && m.boss === target.boss; });
+
+    var groups = new Map(), total = 0;
+    var n = cand.length;
+    for (var i = 0; i < n; i++) {
+      var A = cand[i];
+      for (var j = i; j < n; j++) {
+        var B = cand[j];
+        for (var k = j; k < n; k++) {
+          var C = cand[k];
+          if (i === j && j === k) continue;
+          var sum = A.level + B.level + C.level;
+          if (resultForSum(sum) !== lvT) continue;
+          var bosses = (A.boss ? 1 : 0) + (B.boss ? 1 : 0) + (C.boss ? 1 : 0);
+          if (bossMode ? bosses < 1 : bosses > 0) continue;
+          if (have && A.id !== have.id && B.id !== have.id && C.id !== have.id) continue;
+          var mats = [A, B, C].sort(function (x, y) { return x.level - y.level || (x.boss - y.boss); });
+          var key = mats.map(function (m) { return m.level + (m.boss ? "b" : "n"); }).join("-");
+          var g = groups.get(key);
+          if (!g) { g = { mats: mats.map(function (m) { return { lv: m.level, boss: m.boss }; }), avg: sum / 3, v: 0 }; groups.set(key, g); }
+          g.v++; total++;
+        }
+      }
+    }
+    wantRecipes = Array.from(groups.values());
+    var sortV = $("want-sort").value;
+    wantRecipes.sort(function (x, y) {
+      if (sortV === "many") return y.v - x.v || x.avg - y.avg;
+      if (sortV === "avg") return x.avg - y.avg || x.mats[2].lv - y.mats[2].lv;
+      return x.mats[2].lv - y.mats[2].lv || x.mats[1].lv - y.mats[1].lv || x.mats[0].lv - y.mats[0].lv;
+    });
+
+    var colors = target.cores.map(function (c) {
+      return '<span class="' + COLOR_CLASS[c.color] + '" style="color:var(--c);font-weight:700">' + c.color + "</span> " +
+        esc(c.type === "active" ? c.skill : c.effect);
+    }).join(" · ");
+    $("want-summary").innerHTML =
+      '<div class="want-target"><div class="big"><small>Lv.</small>' + lvT + "</div>" +
+      '<div class="t-name">' + esc(target.monster) + (target.boss ? ' <span class="tag boss">보스</span>' : "") +
+      ' <span class="t-sub">' + esc(target.region) + "</span></div>" +
+      '<div class="t-sub">' + colors + "</div></div>" +
+      '<p class="rivals">결과가 <b>Lv.' + lvT + " " + (bossMode ? "보스" : "일반") + " 코어</b>로 나오면 같은 조건의 코어 <b>" +
+      rivals.length + "종</b> 중 하나가 나옵니다: " + rivals.map(function (m) {
+        return m.id === target.id ? "<b>" + esc(m.monster) + "</b>" : esc(m.monster);
+      }).join(", ") + ". 이 중 어떤 코어가 나오는지와 색은 원본 자료에 정해져 있지 않습니다. " +
+      (bossMode ? "보스 코어라 재료에 보스 코어가 1개 이상 들어가야 합니다." : "일반 코어라 보스 재료 없이 맞춥니다.") + "</p>" +
+      '<p class="rivals">재료 레벨 조합 <b>' + wantRecipes.length.toLocaleString("ko-KR") + "개</b> · 몬스터 조합 <b>" +
+      total.toLocaleString("ko-KR") + "가지</b>" + (have ? " (" + esc(have.monster) + " 포함)" : "") + "</p>";
+
+    wShown = 0;
+    $("want-list").innerHTML = wantRecipes.length ? "" :
+      '<div class="hint-box">이 조건으로 Lv.' + lvT + "을 만드는 조합이 없습니다." + (have ? " 꼭 쓸 재료를 빼 보세요." : "") + "</div>";
+    renderWantRows(have);
+  }
+  function renderWantRows(have) {
+    if (have === undefined) { var hv = $("have").value; have = hv === "" ? null : monsters[Number(hv)]; }
+    var batch = wantRecipes.slice(wShown, wShown + W_PAGE);
+    $("want-list").insertAdjacentHTML("beforeend", batch.map(function (g, n) {
+      var mats = g.mats.map(function (mt) {
+        var names = (byLevel.get(mt.lv) || []).filter(function (m) { return m.boss === mt.boss; });
+        return '<div class="mat"><span class="mat-lv">Lv.' + mt.lv + (mt.boss ? '<span class="bossmark">보스</span>' : "") +
+          '</span><span class="mat-names">' + names.map(function (m) {
+            var cls = (have && m.id === have.id) ? ' class="have"' : "";
+            return "<span" + cls + ">" + esc(m.monster) + "</span>";
+          }).join(", ") + "</span></div>";
+      }).join("");
+      return '<div class="recipe"><span class="n">' + (wShown + n + 1) + '</span><div class="mats">' + mats +
+        '</div><div class="recipe-side"><span>평균<b>' + fmtAvg(g.avg) + "</b></span><span>경우의 수<b>" +
+        g.v.toLocaleString("ko-KR") + "</b></span></div></div>";
+    }).join(""));
+    wShown += batch.length;
+    $("want-more").hidden = wShown >= wantRecipes.length;
+  }
+  ["want", "have", "want-sort"].forEach(function (id) { $(id).addEventListener("change", renderWant); });
+  $("want-more").addEventListener("click", function () { renderWantRows(); });
+  (function () {
+    var def = pool.find(function (m) { return m.monster === "드로이드 검병"; }) || pool[0];
+    $("want").value = String(def.id);
+  })();
+
   // ---------- toast ----------
   var toastTimer;
   function toast(msg) {
@@ -944,6 +1105,7 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
   }
   renderPredict();
   findCombos();
+  renderWant();
   route();
 })();
 </script>
