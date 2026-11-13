@@ -289,6 +289,37 @@ table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1);
   max-width: calc(100% - 32px);
 }
 
+/* ---- save button & need view ---- */
+.save { margin-left: auto; flex: 0 0 auto; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; white-space: nowrap; }
+.core-lv + .save { margin-left: 6px; }
+.save:hover { border-color: var(--muted); color: var(--fg); }
+.save[aria-pressed="true"] { background: var(--accent-bg); border-color: var(--accent-line); color: var(--accent); }
+.tab-count { font-family: var(--font-mono); font-size: 11px; }
+.tab-count:empty { display: none; }
+.need-layout { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 16px; align-items: start; }
+.need-side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--mast-h, 62px) + 12px); max-height: calc(100vh - var(--mast-h, 62px) - 32px); overflow: auto; gap: 10px; }
+.need-side-head, .need-main-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mini-select { height: 32px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-size: var(--step--1); max-width: 100%; }
+.need-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.need-item { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); display: grid; grid-template-columns: 4px minmax(0, 1fr); grid-template-rows: auto auto; overflow: hidden; }
+.need-item::before { content: ""; grid-row: 1 / span 2; background: var(--c); }
+.need-item.active { border-color: var(--fg); box-shadow: var(--shadow); }
+.need-item.done { opacity: .55; }
+.need-item.done .need-name { text-decoration: line-through; }
+.need-pick { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; text-align: left; padding: 9px 10px 4px; border: 0; background: none; cursor: pointer; }
+.need-lv { grid-row: span 2; font-family: var(--font-mono); font-weight: 700; font-size: var(--step--1); padding-top: 1px; }
+.need-name { font-weight: 700; font-size: var(--step--1); }
+.need-core { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: baseline; min-width: 0; }
+.need-core i { flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.need-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 0 10px 6px; font-size: 12px; color: var(--muted); }
+.need-done { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; }
+.need-tools { display: flex; gap: 14px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 8px; }
+.need-io { display: grid; gap: 6px; }
+.need-io textarea { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); font-family: var(--font-mono); font-size: 12px; resize: vertical; }
+.need-io .btn { justify-self: start; height: 36px; }
+.need-detail { display: grid; gap: 12px; }
+.need-title { font-size: var(--step-1); }
+
 /* ---- want panel ---- */
 .card-want { display: grid; gap: 10px; padding: 12px; border-top: 1px solid var(--line); background: var(--surface-2); }
 .card-want .recipe { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 10px; }
@@ -322,6 +353,8 @@ table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1);
 .card-foot { gap: 4px; }
 
 @media (max-width: 860px) {
+  .need-layout { grid-template-columns: minmax(0, 1fr); }
+  .need-side { position: static; max-height: none; }
   .form-row.three { grid-template-columns: minmax(0, 1fr); }
   .recipe { grid-template-columns: minmax(0, 1fr); }
   .recipe .n { display: none; }
@@ -351,6 +384,7 @@ table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1);
     <nav class="tabs" aria-label="메뉴">
       <a class="tab" href="#catalog" data-view="catalog">코어 도감</a>
       <a class="tab" href="#calc" data-view="calc">합성 계산기</a>
+      <a class="tab" href="#need" data-view="need">필요 코어 <span id="need-count" class="tab-count"></span></a>
     </nav>
   </div>
 </header>
@@ -502,6 +536,58 @@ table.combo { width: 100%; border-collapse: collapse; font-size: var(--step--1);
       </section>
     </div>
   </section>
+
+  <!-- ===== 필요 코어 ===== -->
+  <section id="view-need" class="view" aria-labelledby="need-title" hidden>
+    <div class="view-head">
+      <h1 id="need-title">필요 코어</h1>
+      <p class="lede">도감에서 <b>☆ 저장</b>을 누른 코어가 모입니다. 코어를 고르면 옆에 그 코어가 나오는 합성 조합이 보입니다. 목록은 지금 쓰는 기기의 브라우저에 저장됩니다.</p>
+    </div>
+
+    <div id="need-empty" class="empty">
+      <strong>아직 저장한 코어가 없습니다.</strong>
+      <p>코어 도감에서 원하는 코어 오른쪽의 <b>☆ 저장</b>을 눌러 보세요.</p>
+      <p><a class="btn ghost" href="#catalog" style="display:inline-flex;align-items:center;text-decoration:none">코어 도감으로 가기</a></p>
+    </div>
+
+    <div id="need-layout" class="need-layout" hidden>
+      <aside class="panel need-side" aria-label="저장한 코어">
+        <div class="need-side-head">
+          <span id="need-summary-count" class="count"></span>
+          <label class="sr" for="need-sort">목록 정렬</label>
+          <select id="need-sort" class="mini-select">
+            <option value="saved">저장한 순</option>
+            <option value="new">최근 저장 순</option>
+            <option value="lv">레벨 낮은 순</option>
+          </select>
+        </div>
+        <ul id="need-items" class="need-items"></ul>
+        <div class="need-tools">
+          <button type="button" class="link" id="need-clear-done">얻은 코어 지우기</button>
+          <button type="button" class="link" id="need-export">다른 기기로 옮기기</button>
+          <button type="button" class="link" id="need-import-toggle">코드 불러오기</button>
+        </div>
+        <div id="need-io-wrap" class="need-io" hidden>
+          <label class="label" for="need-io">목록 코드</label>
+          <textarea id="need-io" rows="3" spellcheck="false"></textarea>
+          <p class="note">다른 기기에서 이 코드를 붙여 넣고 <b>불러오기</b>를 누르면 목록이 합쳐집니다.</p>
+          <button type="button" class="btn" id="need-import">불러오기</button>
+        </div>
+      </aside>
+      <section class="panel need-main" aria-label="합성 조합">
+        <div class="need-main-head">
+          <h2>이렇게 조합하면 나옵니다</h2>
+          <label class="sr" for="need-recipe-sort">조합 정렬</label>
+          <select id="need-recipe-sort" class="mini-select">
+            <option value="easy">높은 재료 레벨이 낮은 순</option>
+            <option value="avg">평균 레벨 낮은 순</option>
+            <option value="many">경우의 수 많은 순</option>
+          </select>
+        </div>
+        <div id="need-detail" class="need-detail"></div>
+      </section>
+    </div>
+  </section>
 </main>
 
 <footer class="wrap foot">
@@ -531,8 +617,9 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
   // ---------- data prep ----------
   var monsters = DB.monsters.map(function (m, i) {
     m.id = i;
-    m.cores.forEach(function (c) {
+    m.cores.forEach(function (c, ci) {
       c.monster = m;
+      c.key = m.monster + "#" + ci;
       c.searchText = norm([m.monster, c.skill, c.effect, c.weaponGroup, c.combatType].join(" "));
     });
     return m;
@@ -791,6 +878,9 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
       top += '<span class="core-kind">패시브' + (c.lifeCategory ? " · " + c.lifeCategory : "") + "</span>";
     }
     if (c.level !== c.monster.level) top += '<span class="core-lv">Lv.' + c.level + "</span>";
+    var saved = needHas(c.key);
+    top += '<button type="button" class="save" data-save="' + esc(c.key) + '" aria-pressed="' + saved + '" title="' +
+      (saved ? "필요 코어에서 빼기" : "필요 코어에 저장") + '">' + (saved ? "★ 저장됨" : "☆ 저장") + "</button>";
     var meta = [];
     if (c.type === "active") {
       if (c.weaponGroup) meta.push("<span>" + esc(c.weaponGroup) + (c.combatType && c.combatType !== c.weaponGroup && c.combatType !== "전 무기" ? " · " + esc(c.combatType) : "") + "</span>");
@@ -891,6 +981,8 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
   window.addEventListener("resize", syncHeaderHeight);
   syncHeaderHeight();
   $("grid").addEventListener("click", function (e) {
+    var sv = e.target.closest("[data-save]");
+    if (sv) { toggleNeed(sv.dataset.save); return; }
     var b = e.target.closest("[data-add]");
     if (b) addToSlot(Number(b.dataset.add));
     var w = e.target.closest("[data-want]");
@@ -1256,6 +1348,147 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
     $("want").value = String(def.id);
   })();
 
+
+  // ---------- 필요 코어 (saved in this browser) ----------
+  var NEED_KEY = "seres-core-need-v1";
+  var coreByKey = new Map(allCores.map(function (c) { return [c.key, c]; }));
+  var need = loadNeed(); // [{ k: coreKey, done: bool, t: savedAt }]
+  var needSel = null, needHave = {}, needShown = 5;
+
+  function loadNeed() {
+    try {
+      var v = JSON.parse(localStorage.getItem(NEED_KEY) || "[]");
+      return Array.isArray(v) ? v.filter(function (x) { return x && coreByKey.has(x.k); }) : [];
+    } catch (e) { return []; }
+  }
+  function saveNeed() {
+    try { localStorage.setItem(NEED_KEY, JSON.stringify(need)); return true; } catch (e) { return false; }
+  }
+  function needHas(k) { return need.some(function (x) { return x.k === k; }); }
+  function updateNeedCount() { $("need-count").textContent = need.length ? need.length : ""; }
+  function toggleNeed(k) {
+    var c = coreByKey.get(k);
+    if (needHas(k)) {
+      need = need.filter(function (x) { return x.k !== k; });
+      toast(c.monster.monster + " " + c.color + " 코어를 필요 코어에서 뺐습니다");
+    } else {
+      need.push({ k: k, done: false, t: Date.now() });
+      toast(c.monster.monster + " " + c.color + " 코어를 필요 코어에 저장했습니다");
+    }
+    if (!saveNeed()) toast("이 브라우저에서는 저장이 막혀 있어 새로고침하면 사라집니다");
+    updateNeedCount();
+    document.querySelectorAll('[data-save="' + CSS.escape(k) + '"]').forEach(function (b) {
+      var on = needHas(k);
+      b.setAttribute("aria-pressed", on);
+      b.textContent = on ? "★ 저장됨" : "☆ 저장";
+    });
+    if (!$("view-need").hidden) renderNeed();
+  }
+  function coreLabel(c) { return c.type === "active" ? c.skill : c.effect; }
+
+  function renderNeed() {
+    var box = $("need-items");
+    $("need-empty").hidden = need.length > 0;
+    $("need-layout").hidden = need.length === 0;
+    if (!need.length) return;
+    if (!needSel || !needHas(needSel)) needSel = need[0].k;
+    var sortV = $("need-sort").value;
+    var items = need.slice();
+    if (sortV === "lv") items.sort(function (a, b) { return coreByKey.get(a.k).monster.level - coreByKey.get(b.k).monster.level; });
+    else if (sortV === "new") items.sort(function (a, b) { return b.t - a.t; });
+    items.sort(function (a, b) { return a.done - b.done; });
+    box.innerHTML = items.map(function (x) {
+      var c = coreByKey.get(x.k), m = c.monster;
+      return '<li class="need-item' + (x.k === needSel ? " active" : "") + (x.done ? " done" : "") + " " + COLOR_CLASS[c.color] + '">' +
+        '<button type="button" class="need-pick" data-pick="' + esc(x.k) + '" aria-current="' + (x.k === needSel) + '">' +
+        '<span class="need-lv">Lv.' + m.level + "</span>" +
+        '<span class="need-name">' + esc(m.monster) + (m.boss ? ' <span class="bossmark">보스</span>' : "") + "</span>" +
+        '<span class="need-core"><i></i>' + c.color + " · " + esc(coreLabel(c)) + "</span></button>" +
+        '<div class="need-actions"><label class="need-done"><input type="checkbox" data-done="' + esc(x.k) + '"' + (x.done ? " checked" : "") +
+        "> 얻음</label>" + '<button type="button" class="link need-del" data-del="' + esc(x.k) + '">삭제</button></div></li>';
+    }).join("");
+    $("need-summary-count").textContent = "저장 " + need.length + "개 · 얻음 " + need.filter(function (x) { return x.done; }).length + "개";
+    renderNeedDetail();
+  }
+
+  function renderNeedDetail() {
+    var c = coreByKey.get(needSel), target = c.monster;
+    var det = $("need-detail");
+    if (!target.usableInSynthesisCalc) {
+      det.innerHTML = '<h2 class="need-title">' + esc(target.monster) + " · " + c.color + "</h2>" +
+        '<div class="hint-box">무법의 섬 코어는 원본 계산기에서 합성 대상이 아니라 조합을 계산하지 않습니다. 직접 사냥해서 얻어야 합니다.</div>';
+      return;
+    }
+    var haveId = needHave[needSel];
+    var have = haveId != null ? monsters[haveId] : null;
+    var r = computeRecipes(target, have, $("need-recipe-sort").value);
+    det.innerHTML =
+      '<div class="want-target"><div class="big"><small>Lv.</small>' + target.level + "</div>" +
+      '<div class="t-name">' + esc(target.monster) + (target.boss ? ' <span class="tag boss">보스</span>' : "") +
+      ' <span class="t-sub">' + esc(target.region) + "</span></div>" +
+      '<div class="t-sub"><span class="' + COLOR_CLASS[c.color] + '" style="color:var(--c);font-weight:700">' + c.color + "</span> " +
+      esc(coreLabel(c)) + "</div></div>" +
+      rivalsHTML(target, r) +
+      '<label class="field"><span class="label">꼭 쓸 재료 <small>선택 · 가진 코어</small></span><select id="need-have">' +
+      monsterOptions(true).replace("코어 선택", "없음") + "</select></label>" +
+      '<p class="rivals">재료 레벨 조합 <b>' + r.recipes.length.toLocaleString("ko-KR") + "개</b> · 몬스터 조합 <b>" +
+      r.total.toLocaleString("ko-KR") + "가지</b>" + (have ? " (" + esc(have.monster) + " 포함)" : "") + "</p>" +
+      '<div class="want-list">' + (r.recipes.length ? r.recipes.slice(0, needShown).map(function (g, i) { return recipeHTML(g, i, have); }).join("") :
+        '<div class="hint-box">이 조건으로 만드는 조합이 없습니다.' + (have ? " 꼭 쓸 재료를 빼 보세요." : "") + "</div>") + "</div>" +
+      (r.recipes.length > needShown ? '<div class="pager"><button type="button" class="btn ghost" id="need-more">더 보기 (' +
+        (r.recipes.length - needShown).toLocaleString("ko-KR") + "개 남음)</button></div>" : "");
+    $("need-have").value = haveId != null ? String(haveId) : "";
+  }
+
+  $("view-need").addEventListener("click", function (e) {
+    var p = e.target.closest("[data-pick]");
+    if (p) {
+      needSel = p.dataset.pick; needShown = 5; renderNeed();
+      if (window.matchMedia("(max-width: 860px)").matches) $("need-detail").scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    var del = e.target.closest("[data-del]");
+    if (del) { toggleNeed(del.dataset.del); return; }
+    if (e.target.id === "need-more") { needShown += 5; renderNeedDetail(); return; }
+    if (e.target.id === "need-clear-done") {
+      need = need.filter(function (x) { return !x.done; }); saveNeed(); updateNeedCount(); renderNeed(); renderCatalog(); return;
+    }
+    if (e.target.id === "need-export") {
+      var code = JSON.stringify(need.map(function (x) { return [x.k, x.done ? 1 : 0]; }));
+      $("need-io").value = code;
+      $("need-io-wrap").hidden = false;
+      $("need-io").select();
+      if (navigator.clipboard) navigator.clipboard.writeText(code).then(function () { toast("목록 코드를 복사했습니다"); }, function () {});
+      return;
+    }
+    if (e.target.id === "need-import-toggle") { $("need-io-wrap").hidden = false; $("need-io").value = ""; $("need-io").focus(); return; }
+    if (e.target.id === "need-import") {
+      try {
+        var arr = JSON.parse($("need-io").value);
+        var added = 0;
+        arr.forEach(function (x) {
+          var k = Array.isArray(x) ? x[0] : x.k;
+          if (coreByKey.has(k) && !needHas(k)) { need.push({ k: k, done: !!(Array.isArray(x) ? x[1] : x.done), t: Date.now() }); added++; }
+        });
+        saveNeed(); updateNeedCount(); renderNeed(); renderCatalog();
+        toast(added + "개를 불러왔습니다");
+      } catch (err) { toast("코드를 읽지 못했습니다. 내보내기로 만든 코드를 그대로 붙여 넣어 주세요"); }
+    }
+  });
+  $("view-need").addEventListener("change", function (e) {
+    var dn = e.target.closest("[data-done]");
+    if (dn) {
+      need.forEach(function (x) { if (x.k === dn.dataset.done) x.done = dn.checked; });
+      saveNeed(); renderNeed(); return;
+    }
+    if (e.target.id === "need-have") {
+      if (e.target.value === "") delete needHave[needSel]; else needHave[needSel] = Number(e.target.value);
+      needShown = 5; renderNeedDetail(); return;
+    }
+    if (e.target.id === "need-sort") { renderNeed(); return; }
+    if (e.target.id === "need-recipe-sort") { needShown = 5; renderNeedDetail(); }
+  });
+
   // ---------- toast ----------
   var toastTimer;
   function toast(msg) {
@@ -1268,9 +1501,11 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
 
   // ---------- routing ----------
   function route() {
-    var v = location.hash === "#calc" ? "calc" : "catalog";
+    var v = location.hash === "#calc" ? "calc" : location.hash === "#need" ? "need" : "catalog";
     $("view-catalog").hidden = v !== "catalog";
     $("view-calc").hidden = v !== "calc";
+    $("view-need").hidden = v !== "need";
+    if (v === "need") renderNeed();
     document.querySelectorAll(".tab").forEach(function (t) {
       if (t.dataset.view === v) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
     });
@@ -1292,6 +1527,7 @@ window.CORE_DB={"source":"https://mettigimotti.github.io/seres-core-calc/","sour
   renderPredict();
   findCombos();
   renderWant();
+  updateNeedCount();
   route();
 })();
 </script>
